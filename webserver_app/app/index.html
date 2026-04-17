@@ -2639,6 +2639,47 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             color: #dc3545;
         }
 
+        /* Clean 2-Metric Analytics */
+        .analytics-grid-clean {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+            justify-items: center;
+        }
+
+        .analytics-card-large {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 25px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .analytics-card-large:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .analytics-card-large .analytics-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .analytics-card-large .analytics-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 8px;
+        }
+
         /* Meeting Summary Modal */
         .meeting-summary-overlay {
             position: fixed;
@@ -2794,33 +2835,17 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
         </div>
 
-        <!-- Enhanced Analytics Section -->
+        <!-- Clean Analytics Section - 2 Metrics Only -->
         <div class="audio-info-section">
             <h3>Meeting Analytics</h3>
-            <div class="analytics-grid">
-                <div class="analytics-card">
-                    <div class="analytics-label">Confidence Score</div>
-                    <div id="confidence_score" class="analytics-value good">--</div>
-                </div>
-                <div class="analytics-card">
-                    <div class="analytics-label">RMS Level</div>
-                    <div id="rms_level" class="analytics-value">--</div>
-                </div>
-                <div class="analytics-card">
+            <div class="analytics-grid-clean">
+                <div class="analytics-card-large">
                     <div class="analytics-label">Audio Quality</div>
                     <div id="audio_quality" class="analytics-value good">--</div>
                 </div>
-                <div class="analytics-card">
-                    <div class="analytics-label">SNR (dB)</div>
-                    <div id="snr_ratio" class="analytics-value">--</div>
-                </div>
-                <div class="analytics-card">
-                    <div class="analytics-label">Speech Activity</div>
-                    <div id="speech_activity" class="analytics-value">--</div>
-                </div>
-                <div class="analytics-card">
-                    <div class="analytics-label">Avg Response Time</div>
-                    <div id="response_time" class="analytics-value">--</div>
+                <div class="analytics-card-large">
+                    <div class="analytics-label">Speech Level</div>
+                    <div id="speech_level" class="analytics-value">--</div>
                 </div>
             </div>
         </div>
@@ -2850,22 +2875,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
 
             <div class="summary-section">
-                <h3>🔊 Audio Analytics</h3>
-                <div id="audio_analytics">
-                    <p><strong>Total Classifications:</strong> <span id="summary_total_classifications">--</span></p>
-                    <p><strong>Unique Audio Classes:</strong> <span id="summary_unique_classes">--</span></p>
-                    <p><strong>Average Confidence:</strong> <span id="summary_avg_confidence">--</span></p>
-                    <p><strong>Average RMS Level:</strong> <span id="summary_avg_rms">--</span></p>
-                    <p><strong>Audio Quality Rating:</strong> <span id="summary_audio_quality">--</span></p>
-                </div>
-            </div>
-
-            <div class="summary-section">
-                <h3>📈 Performance Metrics</h3>
-                <div id="performance_metrics">
-                    <p><strong>Classifications per Minute:</strong> <span id="summary_classifications_per_min">--</span></p>
-                    <p><strong>Average Response Time:</strong> <span id="summary_avg_response_time">--</span></p>
-                    <p><strong>Speech Activity:</strong> <span id="summary_speech_activity">--</span></p>
+                <h3>📊 Meeting Insights</h3>
+                <div id="meeting_insights">
+                    <p>🗣️ <strong>Speech Quality:</strong> <span id="summary_speech_quality">--</span></p>
+                    <p>👥 <strong>Meeting Activity:</strong> <span id="summary_meeting_activity">--</span></p>
+                    <p>🧠 <strong>AI Analysis:</strong> <span id="summary_total_classifications">--</span> Classifications • <span id="summary_unique_classes">--</span> Unique Classes</p>
                 </div>
             </div>
 

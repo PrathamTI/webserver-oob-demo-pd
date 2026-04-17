@@ -953,53 +953,36 @@ var init = function() {
                 }
 
                 function updateAnalyticsDisplay(confidence, rmsLevel, responseTime) {
-                    // Update confidence score
-                    const confidenceElem = document.getElementById('confidence_score');
-                    if (confidenceElem) {
-                        confidenceElem.textContent = confidence + '%';
-                        confidenceElem.className = 'analytics-value ' +
-                            (confidence >= 80 ? 'good' : confidence >= 60 ? 'warning' : 'danger');
-                    }
+                    // Clean 2-Metric Display
 
-                    // Update RMS level
-                    const rmsElem = document.getElementById('rms_level');
-                    if (rmsElem) {
-                        rmsElem.textContent = rmsLevel + ' dB';
-                        rmsElem.className = 'analytics-value ' +
-                            (rmsLevel >= 40 ? 'good' : rmsLevel >= 25 ? 'warning' : 'danger');
-                    }
-
-                    // Update audio quality (derived from RMS and confidence)
+                    // 1. Audio Quality (derived from confidence and RMS)
                     const qualityElem = document.getElementById('audio_quality');
                     if (qualityElem) {
                         const quality = confidence >= 75 && rmsLevel >= 30 ? 'Excellent' :
                                       confidence >= 60 && rmsLevel >= 20 ? 'Good' :
-                                      confidence >= 40 ? 'Fair' : 'Poor';
+                                      confidence >= 40 ? 'Fair' : 'Detecting...';
                         qualityElem.textContent = quality;
                         qualityElem.className = 'analytics-value ' +
                             (quality === 'Excellent' || quality === 'Good' ? 'good' :
                              quality === 'Fair' ? 'warning' : 'danger');
                     }
 
-                    // Update SNR (simulated)
-                    const snrElem = document.getElementById('snr_ratio');
-                    if (snrElem) {
-                        const snr = (parseFloat(rmsLevel) + Math.random() * 10).toFixed(1);
-                        snrElem.textContent = snr + ' dB';
-                    }
+                    // 2. Speech Level (percentage of speech vs total classifications)
+                    const speechLevelElem = document.getElementById('speech_level');
+                    if (speechLevelElem && classificationStats.history.length > 0) {
+                        // Count speech-related classifications
+                        const speechClasses = ['Speech', 'Conversation', 'Narration', 'Child speech'];
+                        const speechCount = classificationStats.history.filter(item =>
+                            speechClasses.some(speechClass => item.class.includes(speechClass))
+                        ).length;
 
-                    // Update speech activity (based on classification frequency)
-                    const speechElem = document.getElementById('speech_activity');
-                    if (speechElem) {
-                        const activity = classificationStats.total > 0 ?
-                            Math.min(100, (classificationStats.total / ((Date.now() - meetingStartTime) / 1000)) * 10).toFixed(0) + '%' : '0%';
-                        speechElem.textContent = activity;
-                    }
-
-                    // Update response time
-                    const responseElem = document.getElementById('response_time');
-                    if (responseElem) {
-                        responseElem.textContent = responseTime + ' ms';
+                        const speechPercentage = Math.round((speechCount / classificationStats.history.length) * 100);
+                        speechLevelElem.textContent = speechPercentage + '%';
+                        speechLevelElem.className = 'analytics-value ' +
+                            (speechPercentage >= 60 ? 'good' : speechPercentage >= 30 ? 'warning' : 'danger');
+                    } else if (speechLevelElem) {
+                        speechLevelElem.textContent = '--';
+                        speechLevelElem.className = 'analytics-value';
                     }
                 }
 
@@ -1021,25 +1004,34 @@ var init = function() {
                     const avgResponseTime = meetingAnalytics.responseTime.length > 0 ?
                         (meetingAnalytics.responseTime.reduce((a, b) => a + b, 0) / meetingAnalytics.responseTime.length).toFixed(0) : 'N/A';
 
-                    // Update summary modal
+                    // Update summary modal - Clean Format
                     document.getElementById('summary_duration').textContent = formatDuration(duration);
                     document.getElementById('summary_start_time').textContent = startTime;
                     document.getElementById('summary_end_time').textContent = endTime;
                     document.getElementById('summary_total_classifications').textContent = classificationStats.total;
                     document.getElementById('summary_unique_classes').textContent = classificationStats.uniqueClasses.size;
-                    document.getElementById('summary_avg_confidence').textContent = avgConfidence + '%';
-                    document.getElementById('summary_avg_rms').textContent = avgRms + ' dB';
 
+                    // Clean Meeting Insights
                     const audioQualityRating = avgConfidence >= 75 && avgRms >= 30 ? 'Excellent' :
                                              avgConfidence >= 60 && avgRms >= 20 ? 'Good' :
                                              avgConfidence >= 40 ? 'Fair' : 'Poor';
-                    document.getElementById('summary_audio_quality').textContent = audioQualityRating;
 
-                    document.getElementById('summary_classifications_per_min').textContent =
-                        duration > 0 ? ((classificationStats.total / duration) * 60).toFixed(1) : '0';
-                    document.getElementById('summary_avg_response_time').textContent = avgResponseTime + ' ms';
-                    document.getElementById('summary_speech_activity').textContent =
-                        duration > 0 ? Math.min(100, (classificationStats.total / duration) * 10).toFixed(0) + '%' : '0%';
+                    // Calculate speech activity percentage
+                    const speechClasses = ['Speech', 'Conversation', 'Narration', 'Child speech'];
+                    const speechCount = classificationStats.history.filter(item =>
+                        speechClasses.some(speechClass => item.class.includes(speechClass))
+                    ).length;
+                    const speechPercentage = classificationStats.total > 0 ?
+                        Math.round((speechCount / classificationStats.total) * 100) : 0;
+
+                    // Update clean summary fields
+                    const speechQualityText = `🟢 ${audioQualityRating} (${avgConfidence}% avg confidence)`;
+                    const activityText = speechPercentage >= 60 ? `🟢 High (${speechPercentage}% speech detected)` :
+                                       speechPercentage >= 30 ? `🟡 Moderate (${speechPercentage}% speech detected)` :
+                                       `🔴 Low (${speechPercentage}% speech detected)`;
+
+                    document.getElementById('summary_speech_quality').textContent = speechQualityText;
+                    document.getElementById('summary_meeting_activity').textContent = activityText;
 
                     // Generate top classes
                     generateTopClasses();
