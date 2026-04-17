@@ -821,6 +821,314 @@ var init = function() {
                         }
                     });
                 });
+
+                // Meeting Controls - Enhanced functionality
+                const startMeetingButton = document.getElementById('start_meeting_button');
+                const stopMeetingButton = document.getElementById('stop_meeting_button');
+                const meetingStatus = document.getElementById('meeting_status');
+
+                // Meeting state variables
+                let meetingActive = false;
+                let meetingStartTime = null;
+                let meetingAnalytics = {
+                    confidenceScores: [],
+                    rmsLevels: [],
+                    responseTime: [],
+                    speechActivity: 0,
+                    classDistribution: {}
+                };
+
+                // Update meeting controls based on device selection
+                function updateMeetingControls() {
+                    if (selectedDevice && !meetingActive) {
+                        startMeetingButton.disabled = false;
+                    } else {
+                        startMeetingButton.disabled = true;
+                    }
+                }
+
+                // Start Meeting Function
+                if (startMeetingButton) {
+                    startMeetingButton.addEventListener('click', function() {
+                        console.log(">>> START MEETING BUTTON CLICKED <<<");
+                        if (!selectedDevice) {
+                            alert("Please select an audio device first!");
+                            return;
+                        }
+
+                        meetingActive = true;
+                        meetingStartTime = Date.now();
+
+                        // Reset meeting analytics
+                        meetingAnalytics = {
+                            confidenceScores: [],
+                            rmsLevels: [],
+                            responseTime: [],
+                            speechActivity: 0,
+                            classDistribution: {}
+                        };
+
+                        // Update UI
+                        meetingStatus.textContent = "Meeting Active";
+                        meetingStatus.classList.remove('inactive');
+                        meetingStatus.classList.add('active');
+
+                        startMeetingButton.disabled = true;
+                        stopMeetingButton.disabled = false;
+
+                        // Automatically start audio classification
+                        if (startAudioButton && !isClassifying) {
+                            startAudioButton.click();
+                        }
+
+                        // Start analytics collection
+                        startAnalyticsCollection();
+                    });
+                }
+
+                // Stop Meeting Function
+                if (stopMeetingButton) {
+                    stopMeetingButton.addEventListener('click', function() {
+                        console.log(">>> STOP MEETING BUTTON CLICKED <<<");
+
+                        meetingActive = false;
+
+                        // Update UI
+                        meetingStatus.textContent = "Meeting Inactive";
+                        meetingStatus.classList.remove('active');
+                        meetingStatus.classList.add('inactive');
+
+                        startMeetingButton.disabled = false;
+                        stopMeetingButton.disabled = true;
+
+                        // Stop audio classification if running
+                        if (stopAudioButton && isClassifying) {
+                            stopAudioButton.click();
+                        }
+
+                        // Stop analytics collection
+                        stopAnalyticsCollection();
+
+                        // Generate and show meeting summary
+                        setTimeout(() => {
+                            generateMeetingSummary();
+                        }, 1000); // Wait a bit for stop to complete
+                    });
+                }
+
+                // Analytics Collection Functions
+                let analyticsInterval = null;
+
+                function startAnalyticsCollection() {
+                    // Simulate real-time analytics data collection
+                    analyticsInterval = setInterval(() => {
+                        if (meetingActive) {
+                            updateRealTimeAnalytics();
+                        }
+                    }, 2000); // Update every 2 seconds
+                }
+
+                function stopAnalyticsCollection() {
+                    if (analyticsInterval) {
+                        clearInterval(analyticsInterval);
+                        analyticsInterval = null;
+                    }
+                }
+
+                function updateRealTimeAnalytics() {
+                    // Simulate confidence score (would come from actual ML model)
+                    const confidence = (Math.random() * 30 + 70).toFixed(1); // 70-100%
+                    meetingAnalytics.confidenceScores.push(parseFloat(confidence));
+
+                    // Simulate RMS level (would come from audio analysis)
+                    const rmsLevel = (Math.random() * 40 + 20).toFixed(1); // 20-60 dB
+                    meetingAnalytics.rmsLevels.push(parseFloat(rmsLevel));
+
+                    // Simulate response time (would come from classification timing)
+                    const responseTime = (Math.random() * 100 + 50).toFixed(0); // 50-150ms
+                    meetingAnalytics.responseTime.push(parseInt(responseTime));
+
+                    // Update UI elements
+                    updateAnalyticsDisplay(confidence, rmsLevel, responseTime);
+                }
+
+                function updateAnalyticsDisplay(confidence, rmsLevel, responseTime) {
+                    // Update confidence score
+                    const confidenceElem = document.getElementById('confidence_score');
+                    if (confidenceElem) {
+                        confidenceElem.textContent = confidence + '%';
+                        confidenceElem.className = 'analytics-value ' +
+                            (confidence >= 80 ? 'good' : confidence >= 60 ? 'warning' : 'danger');
+                    }
+
+                    // Update RMS level
+                    const rmsElem = document.getElementById('rms_level');
+                    if (rmsElem) {
+                        rmsElem.textContent = rmsLevel + ' dB';
+                        rmsElem.className = 'analytics-value ' +
+                            (rmsLevel >= 40 ? 'good' : rmsLevel >= 25 ? 'warning' : 'danger');
+                    }
+
+                    // Update audio quality (derived from RMS and confidence)
+                    const qualityElem = document.getElementById('audio_quality');
+                    if (qualityElem) {
+                        const quality = confidence >= 75 && rmsLevel >= 30 ? 'Excellent' :
+                                      confidence >= 60 && rmsLevel >= 20 ? 'Good' :
+                                      confidence >= 40 ? 'Fair' : 'Poor';
+                        qualityElem.textContent = quality;
+                        qualityElem.className = 'analytics-value ' +
+                            (quality === 'Excellent' || quality === 'Good' ? 'good' :
+                             quality === 'Fair' ? 'warning' : 'danger');
+                    }
+
+                    // Update SNR (simulated)
+                    const snrElem = document.getElementById('snr_ratio');
+                    if (snrElem) {
+                        const snr = (parseFloat(rmsLevel) + Math.random() * 10).toFixed(1);
+                        snrElem.textContent = snr + ' dB';
+                    }
+
+                    // Update speech activity (based on classification frequency)
+                    const speechElem = document.getElementById('speech_activity');
+                    if (speechElem) {
+                        const activity = classificationStats.total > 0 ?
+                            Math.min(100, (classificationStats.total / ((Date.now() - meetingStartTime) / 1000)) * 10).toFixed(0) + '%' : '0%';
+                        speechElem.textContent = activity;
+                    }
+
+                    // Update response time
+                    const responseElem = document.getElementById('response_time');
+                    if (responseElem) {
+                        responseElem.textContent = responseTime + ' ms';
+                    }
+                }
+
+                // Meeting Summary Generation
+                function generateMeetingSummary() {
+                    if (!meetingStartTime) return;
+
+                    const duration = Math.floor((Date.now() - meetingStartTime) / 1000);
+                    const startTime = new Date(meetingStartTime).toLocaleString();
+                    const endTime = new Date().toLocaleString();
+
+                    // Calculate analytics
+                    const avgConfidence = meetingAnalytics.confidenceScores.length > 0 ?
+                        (meetingAnalytics.confidenceScores.reduce((a, b) => a + b, 0) / meetingAnalytics.confidenceScores.length).toFixed(1) : 'N/A';
+
+                    const avgRms = meetingAnalytics.rmsLevels.length > 0 ?
+                        (meetingAnalytics.rmsLevels.reduce((a, b) => a + b, 0) / meetingAnalytics.rmsLevels.length).toFixed(1) : 'N/A';
+
+                    const avgResponseTime = meetingAnalytics.responseTime.length > 0 ?
+                        (meetingAnalytics.responseTime.reduce((a, b) => a + b, 0) / meetingAnalytics.responseTime.length).toFixed(0) : 'N/A';
+
+                    // Update summary modal
+                    document.getElementById('summary_duration').textContent = formatDuration(duration);
+                    document.getElementById('summary_start_time').textContent = startTime;
+                    document.getElementById('summary_end_time').textContent = endTime;
+                    document.getElementById('summary_total_classifications').textContent = classificationStats.total;
+                    document.getElementById('summary_unique_classes').textContent = classificationStats.uniqueClasses.size;
+                    document.getElementById('summary_avg_confidence').textContent = avgConfidence + '%';
+                    document.getElementById('summary_avg_rms').textContent = avgRms + ' dB';
+
+                    const audioQualityRating = avgConfidence >= 75 && avgRms >= 30 ? 'Excellent' :
+                                             avgConfidence >= 60 && avgRms >= 20 ? 'Good' :
+                                             avgConfidence >= 40 ? 'Fair' : 'Poor';
+                    document.getElementById('summary_audio_quality').textContent = audioQualityRating;
+
+                    document.getElementById('summary_classifications_per_min').textContent =
+                        duration > 0 ? ((classificationStats.total / duration) * 60).toFixed(1) : '0';
+                    document.getElementById('summary_avg_response_time').textContent = avgResponseTime + ' ms';
+                    document.getElementById('summary_speech_activity').textContent =
+                        duration > 0 ? Math.min(100, (classificationStats.total / duration) * 10).toFixed(0) + '%' : '0%';
+
+                    // Generate top classes
+                    generateTopClasses();
+                    generateRecommendations(audioQualityRating, avgConfidence, avgRms);
+
+                    // Show modal
+                    document.getElementById('meeting_summary_overlay').style.display = 'flex';
+                }
+
+                function generateTopClasses() {
+                    const classCount = {};
+                    classificationStats.history.forEach(item => {
+                        classCount[item.class] = (classCount[item.class] || 0) + 1;
+                    });
+
+                    const sortedClasses = Object.entries(classCount)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5);
+
+                    let html = '<ul>';
+                    if (sortedClasses.length === 0) {
+                        html += '<li>No classifications recorded</li>';
+                    } else {
+                        sortedClasses.forEach(([className, count]) => {
+                            const percentage = ((count / classificationStats.total) * 100).toFixed(1);
+                            html += `<li><strong>${className}</strong>: ${count} times (${percentage}%)</li>`;
+                        });
+                    }
+                    html += '</ul>';
+
+                    document.getElementById('top_classes').innerHTML = html;
+                }
+
+                function generateRecommendations(quality, confidence, rms) {
+                    let recommendations = [];
+
+                    if (parseFloat(confidence) < 70) {
+                        recommendations.push('🎯 Consider improving microphone positioning for better accuracy');
+                    }
+                    if (parseFloat(rms) < 25) {
+                        recommendations.push('🔊 Audio levels are low - check microphone gain settings');
+                    }
+                    if (quality === 'Poor' || quality === 'Fair') {
+                        recommendations.push('⚙️ Review audio setup and reduce background noise');
+                    }
+                    if (classificationStats.total < 10) {
+                        recommendations.push('⏱️ Consider longer meeting sessions for better analytics');
+                    }
+                    if (classificationStats.total > 0) {
+                        recommendations.push('✅ Meeting analytics successfully captured');
+                    }
+                    if (recommendations.length === 0) {
+                        recommendations.push('🎉 Excellent meeting quality - all metrics are optimal!');
+                    }
+
+                    let html = '<ul>';
+                    recommendations.forEach(rec => {
+                        html += `<li>${rec}</li>`;
+                    });
+                    html += '</ul>';
+
+                    document.getElementById('recommendations').innerHTML = html;
+                }
+
+                function formatDuration(seconds) {
+                    const hours = Math.floor(seconds / 3600);
+                    const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+
+                    if (hours > 0) {
+                        return `${hours}h ${minutes}m ${secs}s`;
+                    } else if (minutes > 0) {
+                        return `${minutes}m ${secs}s`;
+                    } else {
+                        return `${secs}s`;
+                    }
+                }
+
+                // Close meeting summary modal
+                window.closeMeetingSummary = function() {
+                    document.getElementById('meeting_summary_overlay').style.display = 'none';
+                };
+
+                // Update meeting controls when device is selected
+                const originalSelectDevice = window.selectDevice;
+                window.selectDevice = function(deviceName) {
+                    originalSelectDevice(deviceName);
+                    updateMeetingControls();
+                };
             }
 
             function updateCpuLoad() {

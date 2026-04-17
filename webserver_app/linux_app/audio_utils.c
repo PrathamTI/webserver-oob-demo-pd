@@ -191,7 +191,7 @@ void* gst_launch_thread(void *arg) {
 
     char gst_command[2048]; // Increased buffer size for gst_command
     snprintf(gst_command, sizeof(gst_command),
-             "gst-launch-1.0 alsasrc device=%s ! "
+             "gst-launch-1.0 alsasrc device=dsoundcard ! "
              "audioconvert ! audioresample ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! "
              "tensor_converter frames-per-tensor=3900 ! "
              "tensor_aggregator frames-in=3900 frames-out=15600 frames-flush=3900 frames-dim=1 ! "

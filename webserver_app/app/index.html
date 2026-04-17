@@ -31,7 +31,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <link rel="icon" type="image/png" href="splash/gui_icon.png">
 
-    <title>AM335x Demo</title>
+    <title>AM62dx Demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <script src="components/webcomponentsjs/webcomponents-lite.js"></script>
@@ -2084,7 +2084,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <ti-widget-readme background-color="#ffffff" elevation="5" title-text="README.md" id="readmeViewer" pin></ti-widget-readme>
 <ti-core-stylesheets id="ti_core_stylesheets"></ti-core-stylesheets>
 
-<ti-widget-menubar id="ti_widget_menubar" layout class="x-scope ti-widget-menubar-0" horizontal pin product-name="AM335x Demo">
+<ti-widget-menubar id="ti_widget_menubar" layout class="x-scope ti-widget-menubar-0" horizontal pin product-name="AM62dx Demo">
 
 
     <ti-widget-menuitem name="Tools" id="ti_widget_menuitem_tools" layout>
@@ -2119,7 +2119,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
             <div class="carousel-slide">
                 <ti-widget-image image-path="images/tmdxevm3358-angled.png" lock-aspect-ratio hover-effect="no" visible lockaspectratio center-justified horizontal layout center></ti-widget-image>
-                <ti-widget-label label="AM335x Evaluation Module: Comprehensive development platform for AM335x processors." text-align="center" font-size="medium"></ti-widget-label>
+                <ti-widget-label label="AM62dx Evaluation Module: Comprehensive development platform for AM62dx processors." text-align="center" font-size="medium"></ti-widget-label>
             </div>
         </div>
         <div class="carousel-dots">
@@ -2457,6 +2457,245 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 background-color: white;
             }
         }
+
+        /* Meeting Controls */
+        .meeting-controls {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #f0f7ff;
+            border-radius: 10px;
+            border: 2px solid #148C9C;
+        }
+
+        .meeting-button {
+            font-size: 18px;
+            padding: 15px 30px;
+            margin: 0 10px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+
+        .meeting-button.start {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .meeting-button.start:hover {
+            background-color: #218838;
+            transform: scale(1.05);
+        }
+
+        .meeting-button.stop {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .meeting-button.stop:hover {
+            background-color: #c82333;
+            transform: scale(1.05);
+        }
+
+        .meeting-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .meeting-status {
+            margin-top: 15px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .meeting-status.active {
+            color: #28a745;
+        }
+
+        .meeting-status.inactive {
+            color: #dc3545;
+        }
+
+        /* Active Nodes Display */
+        .nodes-section {
+            background-color: #e8f4fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #148C9C;
+        }
+
+        .nodes-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .nodes-title {
+            color: #148C9C;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .nodes-count {
+            background-color: #148C9C;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .nodes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .node-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .node-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .node-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+
+        .node-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .node-info {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Enhanced Analytics */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .analytics-card {
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .analytics-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .analytics-label {
+            color: #666;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .analytics-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .analytics-value.good {
+            color: #28a745;
+        }
+
+        .analytics-value.warning {
+            color: #ffc107;
+        }
+
+        .analytics-value.danger {
+            color: #dc3545;
+        }
+
+        /* Meeting Summary Modal */
+        .meeting-summary-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .meeting-summary {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .meeting-summary h2 {
+            color: #148C9C;
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 2px solid #148C9C;
+            padding-bottom: 10px;
+        }
+
+        .summary-section {
+            margin: 20px 0;
+        }
+
+        .summary-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .close-summary {
+            background-color: #148C9C;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            width: 100%;
+            font-size: 16px;
+        }
+
+        .close-summary:hover {
+            background-color: #0f7a88;
+        }
     </style>
 
     <div class="audio-classification-container">
@@ -2475,13 +2714,46 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 </div>
             </div>
 
-            <div class="control-section">
-                <button id="start_audio_button" class="control-button primary" disabled>
-                    Start Classification
+            <!-- Meeting Controls -->
+            <div class="meeting-controls">
+                <h3 style="margin-top: 0; color: #148C9C;">Meeting Control Center</h3>
+                <button id="start_meeting_button" class="meeting-button start" disabled>
+                    🎙️ Start Meeting
                 </button>
-                <button id="stop_audio_button" class="control-button danger" disabled>
-                    Stop Classification
+                <button id="stop_meeting_button" class="meeting-button stop" disabled>
+                    ⏹️ Stop Meeting
                 </button>
+                <div id="meeting_status" class="meeting-status inactive">
+                    Meeting Inactive
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Nodes Section -->
+        <div class="audio-info-section">
+            <div class="nodes-section">
+                <div class="nodes-header">
+                    <h3 class="nodes-title">Active Audio Nodes</h3>
+                    <div class="nodes-count" id="active_nodes_count">2</div>
+                </div>
+                <div class="nodes-grid">
+                    <div class="node-card">
+                        <div class="node-name">
+                            <span class="node-status"></span>
+                            Dante Node 1
+                        </div>
+                        <div class="node-info">Network Audio Input</div>
+                        <div class="node-info" style="font-size: 12px; color: #148C9C;">192.168.1.100</div>
+                    </div>
+                    <div class="node-card">
+                        <div class="node-name">
+                            <span class="node-status"></span>
+                            Dante Node 2
+                        </div>
+                        <div class="node-info">Network Audio Input</div>
+                        <div class="node-info" style="font-size: 12px; color: #148C9C;">192.168.1.101</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2522,6 +2794,37 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
         </div>
 
+        <!-- Enhanced Analytics Section -->
+        <div class="audio-info-section">
+            <h3>Meeting Analytics</h3>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <div class="analytics-label">Confidence Score</div>
+                    <div id="confidence_score" class="analytics-value good">--</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">RMS Level</div>
+                    <div id="rms_level" class="analytics-value">--</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Audio Quality</div>
+                    <div id="audio_quality" class="analytics-value good">--</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">SNR (dB)</div>
+                    <div id="snr_ratio" class="analytics-value">--</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Speech Activity</div>
+                    <div id="speech_activity" class="analytics-value">--</div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-label">Avg Response Time</div>
+                    <div id="response_time" class="analytics-value">--</div>
+                </div>
+            </div>
+        </div>
+
         <div class="audio-info-section history-section">
             <h3>Classification History</h3>
             <div id="classification_history" class="classification-history">
@@ -2529,6 +2832,60 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     No classifications yet. Start audio classification to see results here.
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Meeting Summary Modal (initially hidden) -->
+    <div id="meeting_summary_overlay" class="meeting-summary-overlay" style="display: none;">
+        <div class="meeting-summary">
+            <h2>📊 Meeting Summary</h2>
+
+            <div class="summary-section">
+                <h3>📅 Meeting Details</h3>
+                <div id="meeting_details">
+                    <p><strong>Duration:</strong> <span id="summary_duration">--</span></p>
+                    <p><strong>Start Time:</strong> <span id="summary_start_time">--</span></p>
+                    <p><strong>End Time:</strong> <span id="summary_end_time">--</span></p>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>🔊 Audio Analytics</h3>
+                <div id="audio_analytics">
+                    <p><strong>Total Classifications:</strong> <span id="summary_total_classifications">--</span></p>
+                    <p><strong>Unique Audio Classes:</strong> <span id="summary_unique_classes">--</span></p>
+                    <p><strong>Average Confidence:</strong> <span id="summary_avg_confidence">--</span></p>
+                    <p><strong>Average RMS Level:</strong> <span id="summary_avg_rms">--</span></p>
+                    <p><strong>Audio Quality Rating:</strong> <span id="summary_audio_quality">--</span></p>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>📈 Performance Metrics</h3>
+                <div id="performance_metrics">
+                    <p><strong>Classifications per Minute:</strong> <span id="summary_classifications_per_min">--</span></p>
+                    <p><strong>Average Response Time:</strong> <span id="summary_avg_response_time">--</span></p>
+                    <p><strong>Speech Activity:</strong> <span id="summary_speech_activity">--</span></p>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>🎯 Most Detected Classes</h3>
+                <div id="top_classes">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>💡 Recommendations</h3>
+                <div id="recommendations">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <button class="close-summary" onclick="closeMeetingSummary()">
+                Close Summary
+            </button>
         </div>
     </div>
 </ti-widget-vtab>
@@ -2930,7 +3287,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <div class="docs-container">
             <div class="docs-header">
                 <h1>Documentation & <span>Resources</span></h1>
-                <p>Everything you need to develop with AM335x Sitara processors</p>
+                <p>Everything you need to develop with AM62dx Sitara processors</p>
             </div>
 
             <div class="docs-grid">
@@ -2942,7 +3299,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         <h3>Product Page</h3>
                     </div>
                     <p class="doc-card-description">
-                        Explore specifications, features, and ordering information for the AM335x Sitara processor family
+                        Explore specifications, features, and ordering information for the AM62dx Sitara processor family
                     </p>
                     <div class="doc-card-footer">
                         <a href="https://www.ti.com/product/AM3358" target="_blank" class="doc-card-link" onclick="event.stopPropagation()">
@@ -2960,7 +3317,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         <h3>Technical Reference Manual</h3>
                     </div>
                     <p class="doc-card-description">
-                        Complete technical documentation covering all AM335x subsystems, peripherals, and registers
+                        Complete technical documentation covering all AM62dx subsystems, peripherals, and registers
                     </p>
                     <div class="doc-card-footer">
                         <a href="https://www.ti.com/lit/ug/spruh73p/spruh73p.pdf" target="_blank" class="doc-card-link" onclick="event.stopPropagation()">
