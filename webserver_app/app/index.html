@@ -2464,6 +2464,14 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             color: #666;
         }
 
+        /* Ensure consistent sizing for dashboard metrics */
+        .metric-item .metric-value,
+        .quality-section .quality-value {
+            font-size: 1.8em !important;
+            font-weight: 500 !important;
+            color: #666 !important;
+        }
+
         .quality-section {
             display: flex;
             flex-direction: column;
@@ -3284,9 +3292,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             background: white;
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            padding: 25px;
-            max-width: 700px;
-            width: 85%;
+            padding: 30px;
+            max-width: 900px;
+            width: 90%;
             max-height: 85vh;
             overflow: auto;
             position: relative;
@@ -3294,18 +3302,21 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         .modal-header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             margin-bottom: 25px;
             padding-bottom: 15px;
             border-bottom: 1px solid #f0f0f0;
+            position: relative;
+            text-align: center;
         }
 
         .modal-title {
-            font-size: 1.8em;
-            font-weight: 400;
-            color: #7a7a7a;
+            font-size: 2.2em !important;
+            font-weight: bold !important;
+            color: #8b5a2b !important;
             margin: 0;
+            letter-spacing: -0.02em;
         }
 
         .close-btn {
@@ -3327,8 +3338,14 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         .summary-cards-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 18px;
+            gap: 30px;
             margin-bottom: 5px;
+        }
+
+        .summary-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
         .summary-card {
@@ -3338,7 +3355,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
             border: 1px solid #f0f0f0;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            min-height: 200px;
+            min-height: 220px;
+            display: flex;
+            flex-direction: column;
         }
 
         .summary-card:hover {
@@ -3348,38 +3367,122 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         .card-header {
             display: flex;
+            flex-direction: row;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
             margin-bottom: 15px;
+            text-align: center;
         }
 
         .card-icon {
-            font-size: 1.2em;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            color: white;
+            font-weight: bold;
         }
 
-        .card-header h3 {
-            margin: 0;
-            font-size: 1.1em;
-            font-weight: 500;
-            color: #666;
+        /* Icon colors for different card types */
+        .duration-card .card-icon {
+            background: #ff9999;
         }
+
+        .classification-card .card-icon {
+            background: #ffa366;
+        }
+
+        .insight-card .card-icon {
+            background: #ffcc99;
+        }
+
+        .recommendations-card .card-icon {
+            background: #99ccff;
+        }
+
 
         /* Duration Card */
         .duration-card {
             background: linear-gradient(135deg, #fff9f5 0%, #fef5f0 100%);
         }
 
-        .main-duration {
-            font-size: 2.5em;
-            font-weight: 300;
-            color: #db6c6c;
-            margin-bottom: 15px;
+        /* Standardized block content styling - lighter brown, smaller than block titles */
+        .time-label,
+        .time-value,
+        .class-name,
+        .class-percentage,
+        .quality-header,
+        .metric-label,
+        .metric-value,
+        .rec-text {
+            color: #b8956f;
+            font-size: 0.95em;
+            font-weight: 400;
         }
 
-        .time-details {
+        /* Special sizing for main duration */
+        .main-duration {
+            color: #b8956f;
+            font-size: 3.2em !important;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        /* Quality content styling */
+        .quality-content {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .quality-score-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .quality-text {
+            color: #b8956f;
+            font-size: 2.2em;
+            font-weight: 400;
+        }
+
+        .quality-score {
+            font-size: 3.2em;
+            font-weight: 600;
+        }
+
+        /* Quality score color coding */
+        .quality-score.excellent {
+            color: #22c55e;  /* Green for excellent (75%+) */
+        }
+
+        .quality-score.good {
+            color: #3b82f6;  /* Blue for good (60-74%) */
+        }
+
+        .quality-score.fair {
+            color: #f59e0b;  /* Orange for fair (40-59%) */
+        }
+
+        .quality-score.poor {
+            color: #ef4444;  /* Red for poor (<40%) */
+        }
+
+
+        .duration-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            flex: 1;
         }
 
         .time-item {
@@ -3406,26 +3509,31 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         .classification-content {
             display: flex;
-            flex-direction: column;
-            gap: 15px;
+            flex-direction: row;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            flex: 1;
         }
 
         .pie-chart-container {
+            flex: 0 0 250px;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 120px;
+            height: 250px;
         }
 
         .pie-chart-summary {
-            width: 100px;
-            height: 100px;
+            width: 220px;
+            height: 220px;
             border-radius: 50%;
             background: conic-gradient(
-                #ff6b6b 0deg 130deg,
-                #4ecdc4 130deg 200deg,
-                #45b7d1 200deg 280deg,
-                #f9ca24 280deg 360deg
+                #ff9999 0deg 157deg,
+                #99ccff 157deg 246deg,
+                #ffcc99 246deg 293deg,
+                #cc99ff 293deg 360deg
             );
             display: flex;
             align-items: center;
@@ -3433,19 +3541,46 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             position: relative;
         }
 
-        .pie-chart-summary::after {
-            content: '';
-            width: 60px;
-            height: 60px;
+        .pie-chart-center {
+            width: 80px;
+            height: 80px;
             background: white;
             border-radius: 50%;
             position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+            line-height: 1.1;
+        }
+
+        .pie-chart-center small {
+            font-size: 0.6em;
+            color: #666;
+        }
+
+        .pie-chart-percentage {
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            pointer-events: none;
+            z-index: 10;
         }
 
         .classification-list {
             display: flex;
             flex-direction: column;
             gap: 8px;
+            flex: 1;
         }
 
         .classification-item {
@@ -3453,6 +3588,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             align-items: center;
             gap: 10px;
             font-size: 0.9em;
+            color: #8b5a2b;
         }
 
         .class-color {
@@ -3464,10 +3600,11 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         .class-name {
             flex: 1;
-            color: #666;
+            color: #b8956f;
         }
 
-        .class-count {
+        .class-count,
+        .class-percentage {
             color: #333;
             font-weight: 500;
             background: rgba(0,0,0,0.05);
@@ -3536,39 +3673,54 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             display: flex;
             flex-direction: column;
             gap: 15px;
+            padding: 10px;
+            flex: 1;
         }
 
         .recommendations-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 12px;
             margin-bottom: 15px;
+            list-style: none;
+            padding-left: 0;
         }
 
         .recommendation-item {
-            color: #666;
-            font-size: 0.9em;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .recommendation-item::before {
+            content: "•";
+            color: #b8956f;
+            font-size: 1.2em;
+            margin-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .rec-icon {
+            color: #4CAF50;
+            font-size: 1.1em;
+        }
+
+        .rec-text {
+            color: #b8956f;
+            line-height: 1.4;
+            font-size: 1.1em;
+        }
+
+        .recommendation-item {
+            color: #b8956f;
+            font-size: 1.1em;
             line-height: 1.4;
             padding: 5px 0;
         }
 
-        .close-summary-btn {
-            background: linear-gradient(135deg, #db6c6c 0%, #c55a5a 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 0.9em;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            align-self: center;
-        }
-
-        .close-summary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(219, 108, 108, 0.3);
-        }
 
         .modal-footer {
             text-align: center;
@@ -3592,22 +3744,50 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             display: flex;
             align-items: center;
             justify-content: center;
+            position: absolute;
+            top: 0;
+            right: 0;
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
             .summary-cards-grid {
                 grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .summary-column {
                 gap: 15px;
             }
 
             .meeting-summary-modal {
                 padding: 20px;
                 margin: 20px;
+                width: 95%;
+                max-width: none;
             }
 
             .main-duration {
                 font-size: 2em;
+            }
+
+            .modal-title {
+                font-size: 1.8em;
+            }
+
+            .pie-chart-container {
+                height: 120px;
+            }
+
+            .pie-chart-summary {
+                width: 100px;
+                height: 100px;
+            }
+
+            .pie-chart-center {
+                width: 60px;
+                height: 60px;
+                font-size: 0.7em;
             }
         }
 
@@ -3712,7 +3892,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         .class-name {
             font-size: 18px;
             font-weight: 600;
-            color: #333;
+            color: #b8956f;
             margin-bottom: 4px;
         }
 
@@ -3973,11 +4153,12 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         </div>
 
                         <!-- Unique Classes Section -->
-                        <div class="metrics-section">
-                            <div class="metric-item">
-                                <div class="metric-label">Unique Classes</div>
-                                <div id="unique_classes" class="metric-value">0</div>
+                        <div class="quality-section">
+                            <div class="quality-header">
+                                <span class="quality-label">Unique Classes</span>
+                                <span class="quality-icon">⚪</span>
                             </div>
+                            <div id="unique_classes" class="quality-value">0</div>
                         </div>
 
                         <!-- Audio Quality Section -->
@@ -4039,121 +4220,81 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                 <button id="close_summary_button" class="close-btn">×</button>
             </div>
 
-            <!-- 2x2 Card Grid -->
+            <!-- 2-Column Layout -->
             <div class="summary-cards-grid">
-                <!-- Meeting Duration Card -->
-                <div class="summary-card duration-card">
-                    <div class="card-header">
-                        <span class="card-icon">🕒</span>
-                        <h3>Meeting Duration</h3>
+                <!-- Left Column -->
+                <div class="summary-column left-column">
+                    <!-- Meeting Duration Card -->
+                    <div class="summary-card duration-card">
+                        <div class="card-header">
+                            <div class="block-label">Meeting Duration</div>
+                        </div>
+                        <div class="duration-display">
+                            <div class="main-duration" id="summary_duration">1hr 42min</div>
+                        </div>
                     </div>
-                    <div class="duration-display">
-                        <div class="main-duration" id="summary_duration">1hr 42min</div>
-                        <div class="time-details">
-                            <div class="time-item">
-                                <span class="time-label">🟢 Started:</span>
-                                <span class="time-value" id="summary_start_time">2:00 AM</span>
+
+                    <!-- Classification Info Card -->
+                    <div class="summary-card classification-card">
+                        <div class="card-header">
+                            <div class="block-label">Classification Info</div>
+                        </div>
+                        <div class="classification-content">
+                            <!-- Pie Chart with Percentages -->
+                            <div class="pie-chart-container">
+                                <div id="pie_chart_summary" class="pie-chart-summary"></div>
                             </div>
-                            <div class="time-item">
-                                <span class="time-label">🟠 Ended:</span>
-                                <span class="time-value" id="summary_end_time">10:42 AM</span>
+
+                            <!-- Classification List -->
+                            <div class="classification-list">
+                                <div class="classification-item">
+                                    <span class="class-color" style="background: #ff9999;"></span>
+                                    <span class="class-name">Speech</span>
+                                </div>
+                                <div class="classification-item">
+                                    <span class="class-color" style="background: #99ccff;"></span>
+                                    <span class="class-name">Breathing</span>
+                                </div>
+                                <div class="classification-item">
+                                    <span class="class-color" style="background: #ffcc99;"></span>
+                                    <span class="class-name">Inside, Small Room</span>
+                                </div>
                             </div>
+
                         </div>
                     </div>
                 </div>
 
-                <!-- Classification Info Card -->
-                <div class="summary-card classification-card">
-                    <div class="card-header">
-                        <span class="card-icon">📊</span>
-                        <h3>Classification Info</h3>
-                    </div>
-                    <div class="classification-content">
-                        <!-- Pie Chart -->
-                        <div class="pie-chart-container">
-                            <div id="pie_chart" class="pie-chart-summary"></div>
+                <!-- Right Column -->
+                <div class="summary-column right-column">
+                    <!-- Meeting Insight Card -->
+                    <div class="summary-card insight-card">
+                        <div class="card-header">
+                            <div class="block-label">Quality Score</div>
                         </div>
-
-                        <!-- Classification List -->
-                        <div class="classification-list">
-                            <div class="classification-item">
-                                <span class="class-color" style="background: #ff6b6b;"></span>
-                                <span class="class-name">Questions</span>
-                                <span class="class-count">12</span>
-                            </div>
-                            <div class="classification-item">
-                                <span class="class-color" style="background: #4ecdc4;"></span>
-                                <span class="class-name">Speech</span>
-                                <span class="class-count">8</span>
-                            </div>
-                            <div class="classification-item">
-                                <span class="class-color" style="background: #45b7d1;"></span>
-                                <span class="class-name">Discussion</span>
-                                <span class="class-count">5</span>
-                            </div>
-                            <div class="classification-item">
-                                <span class="class-color" style="background: #f9ca24;"></span>
-                                <span class="class-name">Silence</span>
-                                <span class="class-count">2</span>
-                            </div>
-                        </div>
-
-                        <!-- Bar Chart -->
-                        <div class="mini-bar-chart">
-                            <div id="bar_chart_mini" class="bar-chart-mini"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Meeting Insight Card -->
-                <div class="summary-card insight-card">
-                    <div class="card-header">
-                        <span class="card-icon">💡</span>
-                        <h3>Meeting Insight</h3>
-                    </div>
-                    <div class="insight-content">
-                        <div class="quality-summary">
-                            <div class="quality-header">Overall audio quality was <strong id="summary_audio_quality">Excellent</strong></div>
-                            <div class="insight-text" id="summary_insight_text">
-                                Throughout the meeting, ensuring clear and effective communication.
-                            </div>
-                        </div>
-
-                        <div class="metrics-summary">
-                            <div class="metric-row">
-                                <span class="metric-label">📈 Classifications:</span>
-                                <span class="metric-value" id="summary_total_classifications">--</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-label">🎯 Unique Classes:</span>
-                                <span class="metric-value" id="summary_unique_classes">--</span>
-                            </div>
-                            <div class="metric-row">
-                                <span class="metric-label">⭐ Quality Score:</span>
-                                <span class="metric-value" id="summary_quality_score">--</span>
+                        <div class="quality-content">
+                            <div class="quality-score-display">
+                                <span class="quality-score" id="summary_quality_score">89.8%</span>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Recommendations Card -->
-                <div class="summary-card recommendations-card">
-                    <div class="card-header">
-                        <span class="card-icon">📝</span>
-                        <h3>Recommendations</h3>
-                    </div>
-                    <div class="recommendations-content">
-                        <div id="recommendations_list" class="recommendations-list">
-                            <!-- Recommendations will be populated here -->
+                    <!-- Recommendations Card -->
+                    <div class="summary-card recommendations-card">
+                        <div class="card-header">
+                            <div class="block-label">Recommendations</div>
+                        </div>
+                        <div class="recommendations-content">
+                            <div id="recommendations_list" class="recommendations-list">
+                                <div class="recommendation-item">
+                                    <span class="rec-text">Meeting completed successfully with good audio quality</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Standalone Close Summary Button -->
-            <div class="modal-footer">
-                <button class="close-summary-btn">Close Summary</button>
-            </div>
         </div>
     </div>
 
@@ -4250,65 +4391,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <!-- Classification History removed to save space -->
     </div>
 
-    <!-- Meeting Summary Modal (initially hidden) -->
-    <div id="meeting_summary_overlay" class="meeting-summary-overlay" style="display: none;">
-        <div class="meeting-summary">
-            <h2>📊 Meeting Summary</h2>
-
-            <div class="summary-section">
-                <h3>📅 Meeting Details</h3>
-                <div id="meeting_details">
-                    <p><strong>Duration:</strong> <span id="summary_duration">--</span></p>
-                    <p><strong>Start Time:</strong> <span id="summary_start_time">--</span></p>
-                    <p><strong>End Time:</strong> <span id="summary_end_time">--</span></p>
-                </div>
-            </div>
-
-            <div class="summary-section">
-                <h3>📊 Meeting Insights</h3>
-                <div id="meeting_insights">
-                    <p>🎵 <strong>Quality:</strong> <span id="summary_speech_quality">--</span></p>
-                    <p>👥 <strong>Meeting Activity:</strong> <span id="summary_meeting_activity">--</span></p>
-                    <p>🧠 <strong>AI Analysis:</strong> <span id="summary_total_classifications">--</span> Classifications • <span id="summary_unique_classes">--</span> Unique Classes</p>
-                </div>
-            </div>
-
-            <!-- Visual Charts Section -->
-            <div class="summary-section">
-                <h3>📊 Classification Distribution</h3>
-                <div class="chart-container">
-                    <div class="chart-grid">
-                        <div class="bar-chart-section">
-                            <h4>Top 5 Classes</h4>
-                            <div id="bar_chart" class="bar-chart"></div>
-                        </div>
-                        <div class="pie-chart-section">
-                            <h4>Distribution Overview</h4>
-                            <div id="pie_chart" class="pie-chart-display"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="summary-section">
-                <h3>🎯 Detailed Class Breakdown</h3>
-                <div id="top_classes">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <div class="summary-section">
-                <h3>💡 Recommendations</h3>
-                <div id="recommendations">
-                    <!-- Will be populated by JavaScript -->
-                </div>
-            </div>
-
-            <button class="close-summary" onclick="closeMeetingSummary()">
-                Close Summary
-            </button>
-        </div>
-    </div>
 </ti-widget-vtab>
     <ti-widget-vtab id="ti_widget_vtab_cpu_performance" name="CPU Performance" icon="icons:assessment" icon-style="width:30px;height:30px;padding:5px;" visible no-child-tabs-in-menu font-size="inherit" auto-scroll font-style="normal" font-weight="normal" text-align="left" text-decoration="none" autoscroll title vertical layout>
         <style>

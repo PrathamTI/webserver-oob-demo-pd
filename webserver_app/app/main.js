@@ -153,19 +153,25 @@ var init = function() {
 
             let selectedDevice = "default"; // Use default ALSA device
             let audioDevices = ["default"];
-            let classificationStats = {
+
+            // Make classificationStats globally accessible for meeting summary
+            window.classificationStats = {
                 total: 0,
                 uniqueClasses: new Set(),
                 startTime: null,
                 lastUpdateTime: null,
-                history: []
+                history: [],
+                fullClassCount: {} // Track all classifications for accurate summary
             };
+
+            // Local reference for convenience
+            let classificationStats = window.classificationStats;
 
             console.log("Fetch button:", fetchDevicesButton ? "OK" : "MISSING");
 
             // Initialize with fixed device - no audio buttons needed
             if (audioClassificationResult) {
-                audioClassificationResult.textContent = "Ready: default (System Audio Input)";
+                audioClassificationResult.textContent = "None";
                 audioClassificationResult.classList.remove('waiting');
             }
 
@@ -336,6 +342,10 @@ var init = function() {
                 classificationStats.total++;
                 classificationStats.uniqueClasses.add(classification);
                 classificationStats.lastUpdateTime = Date.now();
+
+                // Track full classification count for accurate summary percentages
+                classificationStats.fullClassCount[classification] = (classificationStats.fullClassCount[classification] || 0) + 1;
+
 
                 // Add to history
                 const historyItem = {
@@ -620,13 +630,15 @@ var init = function() {
                     meetingStartTime = Date.now();
 
                     // Reset classification stats for meeting session
-                    classificationStats = {
+                    window.classificationStats = {
                         total: 0,
                         uniqueClasses: new Set(),
                         startTime: Date.now(),
                         lastUpdateTime: null,
-                        history: []
+                        history: [],
+                        fullClassCount: {}
                     };
+                    classificationStats = window.classificationStats;
 
                     // Start session timer for real-time updates
                     if (sessionTimer) clearInterval(sessionTimer);
@@ -710,6 +722,72 @@ var init = function() {
 
                         // Stop analytics collection
                         stopAnalyticsCollection();
+
+                        // Stop and reset session timer
+                        if (sessionTimer) {
+                            clearInterval(sessionTimer);
+                            sessionTimer = null;
+                        }
+
+                        // Reset session time display
+                        const sessionTimeElem = document.getElementById('session_time');
+                        if (sessionTimeElem) {
+                            sessionTimeElem.textContent = '00:00';
+                        }
+
+                        // Preserve classification data for meeting summary
+                        window.meetingSummaryData = {
+                            total: window.classificationStats.total,
+                            uniqueClasses: new Set([...window.classificationStats.uniqueClasses]),
+                            startTime: window.classificationStats.startTime,
+                            lastUpdateTime: window.classificationStats.lastUpdateTime,
+                            history: [...window.classificationStats.history], // Deep copy
+                            fullClassCount: {...window.classificationStats.fullClassCount} // Deep copy
+                        };
+
+                        // Reset classification stats for next session
+                        window.classificationStats = {
+                            total: 0,
+                            uniqueClasses: new Set(),
+                            startTime: null,
+                            lastUpdateTime: null,
+                            history: [],
+                            fullClassCount: {}
+                        };
+                        classificationStats = window.classificationStats;
+
+                        // Reset Live Classification display to default values
+                        const classificationResult = document.getElementById('audio_classification_result');
+                        const uniqueClassesElem = document.getElementById('unique_classes');
+                        const audioQualityElem = document.getElementById('live_audio_quality');
+                        const qualityIcon = document.querySelector('.quality-icon');
+                        const audioLevelBars = document.getElementById('audio_level_bars');
+
+                        if (classificationResult) {
+                            classificationResult.textContent = 'None';
+                            classificationResult.className = 'classification-result'; // Remove any dynamic classes
+                        }
+
+                        if (uniqueClassesElem) {
+                            uniqueClassesElem.textContent = '0';
+                        }
+
+                        if (audioQualityElem) {
+                            audioQualityElem.textContent = 'Not detected';
+                            audioQualityElem.style.color = '#999'; // Gray color for inactive state
+                        }
+
+                        if (qualityIcon) {
+                            qualityIcon.textContent = '⚪'; // White circle for inactive
+                        }
+
+                        // Reset audio level bars to inactive
+                        if (audioLevelBars) {
+                            const bars = audioLevelBars.querySelectorAll('.bar');
+                            bars.forEach(bar => {
+                                bar.classList.remove('active');
+                            });
+                        }
 
                         // Generate and show meeting summary
                         setTimeout(() => {
@@ -900,14 +978,15 @@ var init = function() {
                         }
                     }
 
-                    // Update Audio Level Bar Chart
+                    // Update Progressive Audio Level Bars
                     const levelBarsContainer = document.getElementById('audio_level_bars');
                     if (levelBarsContainer && rmsLevel) {
                         const bars = levelBarsContainer.querySelectorAll('.bar');
                         const activeBars = Math.round(((rmsLevel - 25) / 30) * 15); // Convert RMS to 0-15 bars
 
                         bars.forEach((bar, index) => {
-                            if (index < Math.max(0, activeBars)) {
+                            const level = parseInt(bar.getAttribute('data-level'));
+                            if (level <= Math.max(0, activeBars)) {
                                 bar.classList.add('active');
                             } else {
                                 bar.classList.remove('active');
@@ -961,8 +1040,8 @@ var init = function() {
                     if (!meetingStartTime) return;
 
                     const duration = Math.floor((Date.now() - meetingStartTime) / 1000);
-                    const startTime = new Date(meetingStartTime).toLocaleString();
-                    const endTime = new Date().toLocaleString();
+                    const startTime = new Date(meetingStartTime).toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', hour12: true});
+                    const endTime = new Date().toLocaleTimeString([], {hour: 'numeric', minute: '2-digit', hour12: true});
 
                     // Calculate analytics
                     const avgConfidence = meetingAnalytics.confidenceScores.length > 0 ?
@@ -980,23 +1059,34 @@ var init = function() {
                                              avgConfidence >= 40 ? 'Fair' : 'Poor';
 
                     // Update new summary modal format
-                    document.getElementById('summary_duration').textContent = formatDuration(duration);
-                    document.getElementById('summary_start_time').textContent = startTime;
-                    document.getElementById('summary_end_time').textContent = endTime;
-                    document.getElementById('summary_total_classifications').textContent = classificationStats.total;
-                    document.getElementById('summary_unique_classes').textContent = classificationStats.uniqueClasses.size;
+                    const summaryDuration = document.getElementById('summary_duration');
+                    if (summaryDuration) {
+                        summaryDuration.textContent = formatDuration(duration);
+                    }
 
                     // Update audio quality in insight card
-                    document.getElementById('summary_audio_quality').textContent = audioQualityRating;
-                    document.getElementById('summary_quality_score').textContent = `${avgConfidence}%`;
+                    const summaryAudioQuality = document.getElementById('summary_audio_quality');
+                    if (summaryAudioQuality) {
+                        summaryAudioQuality.textContent = audioQualityRating;
+                    }
+                    const summaryQualityScore = document.getElementById('summary_quality_score');
+                    if (summaryQualityScore) {
+                        summaryQualityScore.textContent = `${avgConfidence}%`;
 
-                    // Update insight text
-                    const insightText = audioQualityRating === 'Excellent' ?
-                        'Throughout the meeting, ensuring clear and effective communication.' :
-                        audioQualityRating === 'Good' ?
-                        'Good audio quality maintained with minor variations.' :
-                        'Audio quality fluctuated, consider optimizing microphone settings.';
-                    document.getElementById('summary_insight_text').textContent = insightText;
+                        // Remove any existing quality classes
+                        summaryQualityScore.classList.remove('excellent', 'good', 'fair', 'poor');
+
+                        // Add appropriate color class based on score
+                        if (avgConfidence >= 75) {
+                            summaryQualityScore.classList.add('excellent');
+                        } else if (avgConfidence >= 60) {
+                            summaryQualityScore.classList.add('good');
+                        } else if (avgConfidence >= 40) {
+                            summaryQualityScore.classList.add('fair');
+                        } else {
+                            summaryQualityScore.classList.add('poor');
+                        }
+                    }
 
                     // Calculate speech activity percentage
                     const speechClasses = ['Speech', 'Conversation', 'Narration', 'Child speech'];
@@ -1006,48 +1096,73 @@ var init = function() {
                     const speechPercentage = classificationStats.total > 0 ?
                         Math.round((speechCount / classificationStats.total) * 100) : 0;
 
-                    // Update clean summary fields
-                    const speechQualityText = `🟢 ${audioQualityRating} (${avgConfidence}% avg confidence)`;
-                    const activityText = speechPercentage >= 60 ? `🟢 High (${speechPercentage}% speech detected)` :
-                                       speechPercentage >= 30 ? `🟡 Moderate (${speechPercentage}% speech detected)` :
-                                       `🔴 Low (${speechPercentage}% speech detected)`;
+                    // Use preserved meeting data or current classificationStats for meeting summary
+                    const summaryStats = window.meetingSummaryData || window.classificationStats || classificationStats;
 
-                    document.getElementById('summary_speech_quality').textContent = speechQualityText;
-                    document.getElementById('summary_meeting_activity').textContent = activityText;
+
+                    // Handle case where no real data exists
+                    if (summaryStats.total === 0 || !summaryStats.history || summaryStats.history.length === 0) {
+                        // If there's no data, show silence as 100%
+                        summaryStats.total = 1;
+                        summaryStats.history = [{class: 'Silence', time: 'N/A'}];
+                        summaryStats.uniqueClasses = new Set(['Silence']);
+                    }
 
                     // Generate top classes
-                    generateTopClasses();
-                    generateRecommendations(audioQualityRating, avgConfidence, avgRms);
+                    generateTopClasses(summaryStats);
+                    generateRecommendations(audioQualityRating, avgConfidence, avgRms, summaryStats);
 
                     // Show modal
-                    document.getElementById('meeting_summary_overlay').style.display = 'flex';
+                    const summaryOverlay = document.getElementById('meeting_summary_overlay');
+                    if (summaryOverlay) {
+                        summaryOverlay.style.display = 'flex';
+                    }
 
                     // Initialize close button functionality
                     initializeCloseButtons();
                 }
 
-                function generateTopClasses() {
-                    const classCount = {};
-                    classificationStats.history.forEach(item => {
-                        classCount[item.class] = (classCount[item.class] || 0) + 1;
-                    });
+                function generateTopClasses(stats = window.classificationStats || classificationStats) {
+                    // Use fullClassCount for complete data, fallback to history-based counting
+                    const classCount = stats.fullClassCount && Object.keys(stats.fullClassCount).length > 0
+                        ? stats.fullClassCount
+                        : (() => {
+                            const historyCount = {};
+                            stats.history.forEach(item => {
+                                historyCount[item.class] = (historyCount[item.class] || 0) + 1;
+                            });
+                            return historyCount;
+                        })();
 
-                    const sortedClasses = Object.entries(classCount)
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 4); // Only top 4 for the new modal
+                    const sortedEntries = Object.entries(classCount)
+                        .sort(([,a], [,b]) => b - a);
 
-                    // Generate Bar Chart
-                    generateBarChart(sortedClasses);
 
-                    // Generate Pie Chart
-                    generatePieChart(sortedClasses);
+                    let displayClasses = [];
 
-                    // Update the classification list in the new modal
-                    updateClassificationList(sortedClasses);
+                    if (sortedEntries.length <= 3) {
+                        // 1-3 classes: show all individually
+                        displayClasses = sortedEntries;
+                    } else {
+                        // 4+ classes: show top 3 + group rest as "Others"
+                        const top3 = sortedEntries.slice(0, 3);
+                        const othersCount = sortedEntries.slice(3).reduce((sum, [, count]) => sum + count, 0);
+
+                        displayClasses = [...top3];
+                        if (othersCount > 0) {
+                            displayClasses.push(['Others', othersCount]);
+                        }
+                    }
+
+                    // Generate Pie Chart with percentages
+                    generatePieChart(displayClasses);
+
+                    // Update the classification list (names only)
+                    updateClassificationList(displayClasses);
                 }
 
                 function updateClassificationList(sortedClasses) {
-                    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24'];
+                    const colors = ['#ff9999', '#99ccff', '#ffcc99', '#cc99ff'];
                     const classificationList = document.querySelector('.classification-list');
 
                     if (!classificationList) return;
@@ -1058,47 +1173,21 @@ var init = function() {
                     } else {
                         sortedClasses.forEach(([className, count], index) => {
                             const color = colors[index] || '#999';
+
                             html += `
                                 <div class="classification-item">
                                     <span class="class-color" style="background: ${color};"></span>
                                     <span class="class-name">${className}</span>
-                                    <span class="class-count">${count}</span>
                                 </div>
                             `;
                         });
                     }
 
                     classificationList.innerHTML = html;
-
-                    // Also update the pie chart area
-                    const pieChartContainer = document.querySelector('.pie-chart-container');
-                    if (pieChartContainer && sortedClasses.length === 0) {
-                        pieChartContainer.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">No data to display</div>';
-                    }
-                }
-
-                function generateBarChart(sortedClasses) {
-                    let html = '';
-                    const colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#148C9C', '#6c757d'];
-
-                    sortedClasses.forEach(([className, count], index) => {
-                        const percentage = ((count / classificationStats.total) * 100).toFixed(1);
-                        html += `
-                            <div class="bar-item">
-                                <div class="bar-label">${className}</div>
-                                <div class="bar-container">
-                                    <div class="bar-fill rank-${index + 1}" style="width: ${percentage}%; background: ${colors[index]}"></div>
-                                </div>
-                                <div style="min-width: 45px; font-weight: bold; color: ${colors[index]}">${percentage}%</div>
-                            </div>
-                        `;
-                    });
-
-                    document.getElementById('bar_chart').innerHTML = html;
                 }
 
                 function generatePieChart(sortedClasses) {
-                    const pieChartElement = document.getElementById('pie_chart');
+                    const pieChartElement = document.getElementById('pie_chart_summary');
                     if (!pieChartElement) return;
 
                     if (sortedClasses.length === 0) {
@@ -1106,148 +1195,139 @@ var init = function() {
                         return;
                     }
 
-                    // Use same colors as classification list
-                    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24'];
-                    let totalPercentage = 0;
+                    // Use light pastel colors like reference UI
+                    const colors = ['#ff9999', '#99ccff', '#ffcc99', '#cc99ff'];
+                    let currentAngle = 0;
                     let gradientStops = [];
+                    let percentageLabels = '';
+
+                    // Calculate total count for normalization to ensure 100%
+                    const totalCount = sortedClasses.reduce((sum, [, count]) => sum + count, 0);
+                    let remainingPercentage = 100;
 
                     sortedClasses.forEach(([className, count], index) => {
-                        const percentage = (count / classificationStats.total) * 100;
-                        const startAngle = totalPercentage * 3.6; // Convert to degrees
-                        const endAngle = (totalPercentage + percentage) * 3.6;
+                        let percentage;
+
+                        if (index === sortedClasses.length - 1) {
+                            // Last item gets remaining percentage to ensure total is 100%
+                            percentage = remainingPercentage;
+                        } else {
+                            percentage = Math.round((count / totalCount) * 100);
+                            remainingPercentage -= percentage;
+                        }
+
+                        const startAngle = currentAngle;
+                        const endAngle = currentAngle + (percentage * 3.6); // Convert to degrees
 
                         gradientStops.push(`${colors[index]} ${startAngle}deg ${endAngle}deg`);
-                        totalPercentage += percentage;
+
+                        // Calculate position for percentage label (middle of the segment)
+                        const midAngle = (startAngle + endAngle) / 2;
+                        const radians = (midAngle - 90) * (Math.PI / 180); // -90 to start from top
+                        const radius = 70; // Distance from center for label placement (bigger pie chart)
+                        const x = Math.cos(radians) * radius;
+                        const y = Math.sin(radians) * radius;
+
+                        // Only show percentage if segment is large enough (>= 5%)
+                        if (percentage >= 5) {
+                            percentageLabels += `
+                                <div class="pie-chart-percentage" style="
+                                    top: calc(50% + ${y}px);
+                                    left: calc(50% + ${x}px);
+                                    transform: translate(-50%, -50%);
+                                ">${percentage}%</div>
+                            `;
+                        }
+
+                        currentAngle = endAngle;
                     });
 
                     const gradientCSS = `conic-gradient(${gradientStops.join(', ')})`;
 
                     const html = `
-                        <div class="pie-chart-summary" style="background: ${gradientCSS};">
-                            <div class="pie-chart-center">
-                                ${classificationStats.total}<br>
-                                <small>Total</small>
-                            </div>
+                        <div class="pie-chart-summary" style="background: ${gradientCSS}; position: relative;">
+                            ${percentageLabels}
                         </div>
                     `;
 
                     pieChartElement.innerHTML = html;
                 }
 
-                function generateRecommendations(quality, confidence, rms) {
+                function generateRecommendations(quality, confidence, rms, stats = window.classificationStats || classificationStats) {
                     let recommendations = [];
 
-                    // Calculate actual class distribution for smart recommendations
+                    // Calculate speech activity for meeting assessment
                     const classCount = {};
-                    let totalClassifications = classificationStats.total;
+                    let totalClassifications = stats.total;
 
-                    classificationStats.history.forEach(item => {
+                    stats.history.forEach(item => {
                         classCount[item.class] = (classCount[item.class] || 0) + 1;
                     });
 
-                    // Sort classes by frequency
-                    const sortedClasses = Object.entries(classCount)
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 5);
-
-                    // Generate intelligent recommendations based on actual data
-                    if (totalClassifications === 0) {
-                        recommendations.push('❌ No audio classifications detected - check audio input');
-                        return;
+                    // 1. Audio Quality Recommendation
+                    const avgConfidence = parseFloat(confidence);
+                    if (avgConfidence >= 75) {
+                        recommendations.push('Audio quality was excellent throughout the meeting, ensuring clear and effective communication.');
+                    } else if (avgConfidence >= 60) {
+                        recommendations.push('Audio quality was good with clear communication for most of the meeting.');
+                    } else if (avgConfidence >= 40) {
+                        recommendations.push('Audio quality was fair - consider improving microphone setup for better clarity.');
+                    } else {
+                        recommendations.push('Audio quality needs improvement - check microphone and audio settings.');
                     }
 
-                    // Check for silence dominance
-                    const silenceCount = classCount['Silence'] || 0;
-                    const silencePercentage = (silenceCount / totalClassifications) * 100;
+                    // 2. Meeting Classification/Speech Activity Recommendation
+                    if (totalClassifications === 0 || totalClassifications === 1 && classCount['Silence']) {
+                        recommendations.push('No speech activity detected - meeting may have been inactive or audio input issues occurred.');
+                    } else {
+                        const speechClasses = ['Speech', 'Male speech', 'Female speech', 'Child speech', 'Conversation', 'Narration'];
+                        const speechCount = speechClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
+                        const speechPercentage = (speechCount / totalClassifications) * 100;
 
-                    if (silencePercentage > 60) {
-                        recommendations.push(`🔇 High silence detected (${silencePercentage.toFixed(1)}%) - participants may be muted or inactive`);
+                        if (speechPercentage > 60) {
+                            recommendations.push('Meeting showed excellent participation with high speech activity and engagement.');
+                        } else if (speechPercentage > 30) {
+                            recommendations.push('Meeting had moderate participation - good balance of discussion and listening.');
+                        } else if (speechPercentage > 10) {
+                            recommendations.push('Meeting showed limited participation - consider encouraging more active discussion.');
+                        } else {
+                            recommendations.push('Meeting had minimal speech activity - participants may have been mostly listening or muted.');
+                        }
                     }
 
-                    // Check for speech activity
-                    const speechClasses = ['Speech', 'Male speech', 'Female speech', 'Child speech', 'Conversation', 'Narration'];
-                    const speechCount = speechClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
-                    const speechPercentage = (speechCount / totalClassifications) * 100;
-
-                    if (speechPercentage > 50) {
-                        recommendations.push(`🗣️ Good speech activity (${speechPercentage.toFixed(1)}%) - active participation detected`);
-                    } else if (speechPercentage < 20) {
-                        recommendations.push(`📢 Low speech activity (${speechPercentage.toFixed(1)}%) - encourage more participation`);
-                    }
-
-                    // Check for background noise/distractions
-                    const noiseClasses = ['Music', 'Background music', 'Noise', 'White noise', 'Pink noise'];
-                    const noiseCount = noiseClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
-                    const noisePercentage = (noiseCount / totalClassifications) * 100;
-
-                    if (noisePercentage > 15) {
-                        recommendations.push(`🔊 Background noise detected (${noisePercentage.toFixed(1)}%) - consider muting when not speaking`);
-                    }
-
-                    // Check for laughter/engagement
-                    const engagementClasses = ['Laughter', 'Chuckle', 'Giggle'];
-                    const engagementCount = engagementClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
-                    const engagementPercentage = (engagementCount / totalClassifications) * 100;
-
-                    if (engagementPercentage > 5) {
-                        recommendations.push(`😄 Positive engagement detected (${engagementPercentage.toFixed(1)}% laughter) - great meeting atmosphere!`);
-                    }
-
-                    // Audio quality recommendations
-                    if (parseFloat(confidence) < 70) {
-                        recommendations.push('🎯 Low classification confidence - check microphone quality');
-                    }
-
-                    // Meeting length recommendations
-                    if (totalClassifications > 100) {
-                        recommendations.push(`📊 Comprehensive analysis completed (${totalClassifications} samples) - reliable data collected`);
-                    } else if (totalClassifications < 30) {
-                        recommendations.push('⏱️ Short meeting detected - longer sessions provide more accurate insights');
-                    }
-
-                    if (recommendations.length === 0) {
-                        recommendations.push('✅ Meeting completed successfully with good audio quality');
-                    }
-
-                    // Update new recommendations format
+                    // Update recommendations display
                     const recommendationsList = document.getElementById('recommendations_list');
                     if (recommendationsList) {
                         let html = '';
-                        recommendations.slice(0, 3).forEach(rec => { // Show only top 3 recommendations
-                            html += `<div class="recommendation-item">${rec}</div>`;
+                        recommendations.forEach(rec => {
+                            html += `
+                                <div class="recommendation-item">
+                                    <span class="rec-text">${rec}</span>
+                                </div>`;
                         });
                         recommendationsList.innerHTML = html;
-                    }
-
-                    // Keep old format for compatibility
-                    const oldRecommendations = document.getElementById('recommendations');
-                    if (oldRecommendations) {
-                        let html = '<ul>';
-                        recommendations.forEach(rec => {
-                            html += `<li>${rec}</li>`;
-                        });
-                        html += '</ul>';
-                        oldRecommendations.innerHTML = html;
                     }
                 }
 
                 function formatDuration(seconds) {
                     const hours = Math.floor(seconds / 3600);
                     const minutes = Math.floor((seconds % 3600) / 60);
-                    const secs = seconds % 60;
 
                     if (hours > 0) {
-                        return `${hours}h ${minutes}m ${secs}s`;
+                        return `${hours} hr ${minutes} min`;
                     } else if (minutes > 0) {
-                        return `${minutes}m ${secs}s`;
+                        return `${minutes} min`;
                     } else {
-                        return `${secs}s`;
+                        return `${seconds} sec`;
                     }
                 }
 
                 // Close meeting summary modal
                 window.closeMeetingSummary = function() {
-                    document.getElementById('meeting_summary_overlay').style.display = 'none';
+                    const summaryOverlay = document.getElementById('meeting_summary_overlay');
+                    if (summaryOverlay) {
+                        summaryOverlay.style.display = 'none';
+                    }
                 };
 
                 // Initialize close button functionality when summary is opened
