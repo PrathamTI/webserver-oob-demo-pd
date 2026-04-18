@@ -2161,17 +2161,18 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-bottom: 40px;
         }
 
-        .dashboard-title {
-            font-size: 2.5em;
-            font-weight: 400;
-            color: #7a7a7a;
+        .dashboard-header .dashboard-title,
+        .dashboard-header h1.dashboard-title {
+            font-size: 2.2em !important;
+            font-weight: bold !important;
+            color: #8b5a2b !important;
             margin: 0;
             letter-spacing: -0.02em;
         }
 
         .dashboard-content {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 3fr 2fr;
             gap: 60px;
             align-items: start;
         }
@@ -2180,19 +2181,29 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         .dashboard-left {
             display: flex;
             flex-direction: column;
-            gap: 40px;
+            gap: 25px;
         }
 
-        .session-time-card {
+        /* Info Block Styles */
+        .info-block {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+
+        .block-label {
+            font-size: 1.8em;
+            color: #8b5a2b;
+            margin-bottom: 15px;
+            font-weight: 600;
             text-align: center;
-            margin-bottom: 20px;
         }
 
-        .session-label {
-            font-size: 1.1em;
-            color: #999;
-            margin-bottom: 5px;
-            font-weight: 400;
+        /* Session Block */
+        .session-block {
+            text-align: center;
         }
 
         .session-time {
@@ -2200,7 +2211,80 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             font-weight: 300;
             color: #666;
             font-family: 'Courier New', monospace;
+            margin-bottom: 25px;
         }
+
+        .session-controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .session-button {
+            flex: 1;
+            max-width: 240px;
+            padding: 20px 32px;
+            border: none;
+            border-radius: 32px;
+            font-size: 1.3em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-height: 60px;
+        }
+
+        .session-button.start-btn {
+            background: #E17B7B;
+            color: white;
+        }
+
+        .session-button.start-btn:hover:not(:disabled) {
+            background: #d96b6b;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(225, 123, 123, 0.3);
+        }
+
+        .session-button.end-btn {
+            background: #B8B8B8;
+            color: white;
+        }
+
+        .session-button.end-btn:hover:not(:disabled) {
+            background: #a8a8a8;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(184, 184, 184, 0.3);
+        }
+
+        .session-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .session-button .button-icon {
+            font-size: 1.2em;
+        }
+
+        /* Nodes Block */
+        .nodes-block .nodes-grid-centered {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+        }
+
+        .node-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
 
         .meeting-controls-section {
             display: flex;
@@ -2299,18 +2383,190 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             color: #666;
         }
 
+        /* Device-specific styling */
+        .avatar-placeholder.device-1,
+        .avatar-placeholder.device-2 {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .device-icon {
+            font-size: 1.8em;
+            color: #148C9C;
+            margin-bottom: 2px;
+        }
+
+        .avatar-placeholder.device-1 .avatar-initials,
+        .avatar-placeholder.device-2 .avatar-initials {
+            color: #495057;
+            font-weight: bold;
+            font-size: 0.7em;
+        }
+
         /* Right Column Styles */
         .dashboard-right {
             display: flex;
             flex-direction: column;
         }
 
-        .live-classification-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            border: 1px solid #f0f0f0;
+        /* Classification Block */
+        .classification-block {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .classification-section {
+            text-align: center;
+        }
+
+        .classification-label {
+            font-size: 1.5em;
+            color: #c4966c;
+            margin-bottom: 8px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .classification-result {
+            font-size: 1.8em;
+            font-weight: 500;
+            color: #db6c6c;
+            letter-spacing: -0.02em;
+            padding: 10px 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .metrics-section {
+            text-align: center;
+        }
+
+        .metric-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .metric-label {
+            font-size: 1.5em;
+            color: #c4966c;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: 500;
+            color: #666;
+        }
+
+        .quality-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quality-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .quality-label {
+            font-size: 1.5em;
+            color: #c4966c;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .quality-value {
+            font-size: 1.8em;
+            font-weight: 500;
+            color: #5cb85c;
+        }
+
+        /* Progressive Audio Level Bars */
+        .level-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .level-label {
+            font-size: 1.5em;
+            color: #c4966c;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .level-bars-progressive {
+            display: flex;
+            gap: 3px;
+            align-items: end;
+            height: 50px;
+            padding: 0 10px;
+        }
+
+        .level-bars-progressive .bar {
+            flex: 1;
+            background: #e0e0e0;
+            border-radius: 2px 2px 0 0;
+            transition: all 0.3s ease;
+            min-width: 4px;
+        }
+
+        /* Progressive heights - each bar incrementally taller */
+        .level-bars-progressive .bar[data-level="1"] { height: 8%; }
+        .level-bars-progressive .bar[data-level="2"] { height: 12%; }
+        .level-bars-progressive .bar[data-level="3"] { height: 16%; }
+        .level-bars-progressive .bar[data-level="4"] { height: 20%; }
+        .level-bars-progressive .bar[data-level="5"] { height: 24%; }
+        .level-bars-progressive .bar[data-level="6"] { height: 28%; }
+        .level-bars-progressive .bar[data-level="7"] { height: 32%; }
+        .level-bars-progressive .bar[data-level="8"] { height: 36%; }
+        .level-bars-progressive .bar[data-level="9"] { height: 40%; }
+        .level-bars-progressive .bar[data-level="10"] { height: 50%; }
+        .level-bars-progressive .bar[data-level="11"] { height: 60%; }
+        .level-bars-progressive .bar[data-level="12"] { height: 70%; }
+        .level-bars-progressive .bar[data-level="13"] { height: 80%; }
+        .level-bars-progressive .bar[data-level="14"] { height: 90%; }
+        .level-bars-progressive .bar[data-level="15"] { height: 100%; }
+
+        /* Green gradient - gets greener as levels increase */
+        .level-bars-progressive .bar.active[data-level="1"],
+        .level-bars-progressive .bar.active[data-level="2"],
+        .level-bars-progressive .bar.active[data-level="3"] {
+            background: linear-gradient(to top, #a8d8a8 0%, #90c290 100%);
+        }
+
+        .level-bars-progressive .bar.active[data-level="4"],
+        .level-bars-progressive .bar.active[data-level="5"],
+        .level-bars-progressive .bar.active[data-level="6"] {
+            background: linear-gradient(to top, #90c290 0%, #78b478 100%);
+        }
+
+        .level-bars-progressive .bar.active[data-level="7"],
+        .level-bars-progressive .bar.active[data-level="8"],
+        .level-bars-progressive .bar.active[data-level="9"] {
+            background: linear-gradient(to top, #78b478 0%, #60a660 100%);
+        }
+
+        .level-bars-progressive .bar.active[data-level="10"],
+        .level-bars-progressive .bar.active[data-level="11"],
+        .level-bars-progressive .bar.active[data-level="12"] {
+            background: linear-gradient(to top, #60a660 0%, #4e944e 100%);
+        }
+
+        .level-bars-progressive .bar.active[data-level="13"],
+        .level-bars-progressive .bar.active[data-level="14"],
+        .level-bars-progressive .bar.active[data-level="15"] {
+            background: linear-gradient(to top, #4e944e 0%, #3e8e3e 100%);
         }
 
         .card-title {
@@ -2326,12 +2582,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             text-align: center;
         }
 
-        .classification-label {
-            font-size: 1em;
-            color: #999;
-            margin-bottom: 10px;
-            font-weight: 400;
-        }
 
         .classification-result {
             font-size: 2.2em;
@@ -2380,11 +2630,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-bottom: 30px;
         }
 
-        .metric-label {
-            font-size: 1em;
-            color: #999;
-            margin-bottom: 5px;
-        }
 
         .metric-number {
             font-size: 3em;
@@ -2396,18 +2641,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-bottom: 25px;
         }
 
-        .quality-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
 
-        .quality-label {
-            font-size: 1em;
-            color: #999;
-            font-weight: 400;
-        }
 
         .quality-icon {
             font-size: 1.2em;
@@ -2423,12 +2657,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-bottom: 20px;
         }
 
-        .level-label {
-            font-size: 1em;
-            color: #999;
-            margin-bottom: 15px;
-            font-weight: 400;
-        }
 
         .level-bars {
             display: flex;
@@ -2477,6 +2705,29 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             .avatar-placeholder {
                 width: 60px;
                 height: 60px;
+            }
+
+            .session-time {
+                font-size: 1.8em;
+                margin-bottom: 20px;
+            }
+
+            .session-controls {
+                gap: 15px;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .session-button {
+                max-width: 280px;
+                width: 100%;
+                padding: 18px 28px;
+                font-size: 1.2em;
+            }
+
+            .dashboard-header .dashboard-title,
+            .dashboard-header h1.dashboard-title {
+                font-size: 2.0em !important;
             }
         }
 
@@ -2625,13 +2876,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
-        .classification-label {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
 
         .classification-value {
             font-size: 32px;
@@ -3257,12 +3501,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-bottom: 15px;
         }
 
-        .quality-header {
-            font-size: 1.1em;
-            color: #333;
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
 
         .insight-text {
             color: #666;
@@ -3283,9 +3521,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             font-size: 0.9em;
         }
 
-        .metric-label {
-            color: #666;
-        }
 
         .metric-value {
             color: #333;
@@ -3683,36 +3918,42 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <div class="dashboard-content">
                 <!-- Left Column -->
                 <div class="dashboard-left">
-                    <!-- Session Timer -->
-                    <div class="session-time-card">
-                        <div class="session-label">Session Time:</div>
-                        <div id="session_time" class="session-time">00:00:00</div>
+                    <!-- Session Timer Block -->
+                    <div class="info-block session-block">
+                        <div class="block-label">Session Time</div>
+                        <div id="session_time" class="session-time">00:00</div>
+
+                        <!-- Meeting Controls inside Session Block -->
+                        <div class="session-controls">
+                            <button id="start_meeting_button" class="session-button start-btn">
+                                <span class="button-icon">▶</span>
+                                Start Meeting
+                            </button>
+                            <button id="stop_meeting_button" class="session-button end-btn" disabled>
+                                <span class="button-icon">⏹</span>
+                                End Meeting
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Meeting Controls -->
-                    <div class="meeting-controls-section">
-                        <button id="start_meeting_button" class="dashboard-button start-btn">
-                            <span class="button-icon">▶</span>
-                            Start Meeting
-                        </button>
-                        <button id="stop_meeting_button" class="dashboard-button end-btn" disabled>
-                            <span class="button-icon">🔊</span>
-                            End Meeting
-                        </button>
-                    </div>
-
-                    <!-- Active Nodes Section -->
-                    <div class="active-nodes-section">
-                        <h3 class="nodes-title">Active Nodes</h3>
-                        <div class="nodes-grid">
-                            <div class="node-avatar">
-                                <div class="avatar-placeholder">
-                                    <span class="avatar-initials">U1</span>
+                    <!-- Active Nodes Block -->
+                    <div class="info-block nodes-block">
+                        <div class="block-label">Active Nodes</div>
+                        <div class="nodes-grid-centered">
+                            <div class="node-item">
+                                <div class="node-avatar">
+                                    <div class="avatar-placeholder device-1">
+                                        <span class="device-icon">🎧</span>
+                                        <span class="avatar-initials">D1</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="node-avatar">
-                                <div class="avatar-placeholder">
-                                    <span class="avatar-initials">U2</span>
+                            <div class="node-item">
+                                <div class="node-avatar">
+                                    <div class="avatar-placeholder device-2">
+                                        <span class="device-icon">🎧</span>
+                                        <span class="avatar-initials">D2</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -3721,50 +3962,52 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
                 <!-- Right Column -->
                 <div class="dashboard-right">
-                    <!-- Live Classification Section -->
-                    <div class="live-classification-card">
-                        <h3 class="card-title">Live Classification</h3>
+                    <!-- Live Classification Block -->
+                    <div class="info-block classification-block">
+                        <div class="block-label">Live Classification</div>
 
-                        <!-- Current Classification -->
-                        <div class="current-classification">
+                        <!-- Current Classification Section -->
+                        <div class="classification-section">
                             <div class="classification-label">Current Classification</div>
-                            <div id="audio_classification_result" class="classification-result">--</div>
+                            <div id="audio_classification_result" class="classification-result">None</div>
                         </div>
 
-                        <!-- Unique Classes -->
-                        <div class="unique-classes">
-                            <div class="metric-label">Unique Classes</div>
-                            <div id="unique_classes" class="metric-number">0</div>
+                        <!-- Unique Classes Section -->
+                        <div class="metrics-section">
+                            <div class="metric-item">
+                                <div class="metric-label">Unique Classes</div>
+                                <div id="unique_classes" class="metric-value">0</div>
+                            </div>
                         </div>
 
-                        <!-- Audio Quality -->
-                        <div class="audio-quality">
+                        <!-- Audio Quality Section -->
+                        <div class="quality-section">
                             <div class="quality-header">
                                 <span class="quality-label">Audio Quality</span>
-                                <span class="quality-icon">💚</span>
+                                <span class="quality-icon">⚪</span>
                             </div>
-                            <div id="live_audio_quality" class="quality-value">Excellent</div>
+                            <div id="live_audio_quality" class="quality-value">Not detected</div>
                         </div>
 
-                        <!-- Audio Level -->
-                        <div class="audio-level">
+                        <!-- Audio Level Section -->
+                        <div class="level-section">
                             <div class="level-label">Audio Level</div>
-                            <div id="audio_level_bars" class="level-bars">
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
-                                <div class="bar"></div>
+                            <div id="audio_level_bars" class="level-bars-progressive">
+                                <div class="bar" data-level="1"></div>
+                                <div class="bar" data-level="2"></div>
+                                <div class="bar" data-level="3"></div>
+                                <div class="bar" data-level="4"></div>
+                                <div class="bar" data-level="5"></div>
+                                <div class="bar" data-level="6"></div>
+                                <div class="bar" data-level="7"></div>
+                                <div class="bar" data-level="8"></div>
+                                <div class="bar" data-level="9"></div>
+                                <div class="bar" data-level="10"></div>
+                                <div class="bar" data-level="11"></div>
+                                <div class="bar" data-level="12"></div>
+                                <div class="bar" data-level="13"></div>
+                                <div class="bar" data-level="14"></div>
+                                <div class="bar" data-level="15"></div>
                             </div>
                         </div>
                     </div>
