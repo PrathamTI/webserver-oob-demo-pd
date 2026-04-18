@@ -183,7 +183,6 @@ var init = function() {
 
                 // Reset selection when fetching devices
                 selectedDevice = null;
-                startAudioButton.disabled = true;
 
                 // Reset the classification display
                 audioClassificationResult.textContent = "Waiting to start...";
@@ -304,8 +303,6 @@ var init = function() {
                         }
                     }
                 });
-
-                startAudioButton.disabled = false;
 
                 // Update display with shortened device name
                 var shortName = deviceName;
@@ -469,8 +466,6 @@ var init = function() {
                                 console.log("[Audio WebSocket] Classification stopped");
                                 audioClassificationResult.textContent = "Classification stopped";
                                 audioClassificationResult.classList.add('waiting');
-                                startAudioButton.disabled = false;
-                                stopAudioButton.disabled = true;
                                 isClassifying = false;
 
                                 // Update status indicator
@@ -487,8 +482,6 @@ var init = function() {
                                 console.error("[Audio WebSocket] Error:", result.error);
                                 audioClassificationResult.textContent = "Error: " + result.error;
                                 audioClassificationResult.style.color = "#dc3545"; // Red for error
-                                startAudioButton.disabled = false;
-                                stopAudioButton.disabled = true;
                                 isClassifying = false;
 
                                 // Update status indicator
@@ -555,8 +548,6 @@ var init = function() {
                         } else if (isClassifying) {
                             console.error("[Audio WebSocket] Max reconnection attempts reached");
                             audioClassificationResult.label = "Connection lost";
-                            startAudioButton.disabled = false;
-                            stopAudioButton.disabled = true;
                             isClassifying = false;
                         }
                     };
@@ -574,145 +565,7 @@ var init = function() {
             // Session timer
             let sessionTimer = null;
 
-            // Start button handler
-            if (startAudioButton) {
-                startAudioButton.addEventListener('click', function() {
-                    console.log(">>> START BUTTON CLICKED <<<");
-                    if (!selectedDevice) {
-                        alert("Please select a device first!");
-                        return;
-                    }
-
-                    console.log("[Audio] Starting classification with device:", selectedDevice);
-
-                    // Log the exact device format being sent
-                    console.log("[Audio] Device format check:");
-                    console.log("  - Raw device string:", selectedDevice);
-                    console.log("  - URL encoded:", encodeURIComponent(selectedDevice));
-
-                    // Verify it's in the correct format for GStreamer (plughw:X,Y)
-                    if (selectedDevice.includes('plughw:')) {
-                        var match = selectedDevice.match(/plughw:(\d+),(\d+)/);
-                        if (match) {
-                            console.log("  - Card number:", match[1]);
-                            console.log("  - Subdevice number:", match[2]);
-                            console.log("  - GStreamer will use: alsasrc device=" + selectedDevice);
-                        }
-                    }
-
-                    // WebSocket is already set up (persistent connection)
-                    // Just ensure it's connected or reconnect if needed
-                    if (!wsAudio) {
-                        console.log("[Audio] WebSocket not connected, reconnecting");
-                        setupAudioWebSocket();
-                    }
-
-                    // Reset statistics
-                    classificationStats = {
-                        total: 0,
-                        uniqueClasses: new Set(),
-                        startTime: Date.now(),
-                        lastUpdateTime: null,
-                        history: []
-                    };
-
-                    // Start session timer
-                    if (sessionTimer) clearInterval(sessionTimer);
-                    sessionTimer = setInterval(updateSessionTime, 1000);
-
-                    // Update UI
-                    audioClassificationResult.textContent = "Starting...";
-                    audioClassificationResult.classList.add('waiting');
-                    startAudioButton.disabled = true;
-                    stopAudioButton.disabled = true;
-
-                    // Update status indicator
-                    const statusIndicator = document.getElementById('status_indicator');
-                    const statusText = document.getElementById('status_text');
-                    if (statusIndicator) {
-                        statusIndicator.classList.remove('inactive');
-                        statusIndicator.classList.add('active');
-                    }
-                    if (statusText) {
-                        statusText.textContent = 'Connecting...';
-                    }
-
-                    // First try stopping any existing classification
-                    $.ajax({
-                        url: '/stop-audio-classification',
-                        type: 'GET',
-                        complete: function() {
-                            // Start classification after cleanup - no matter what happened with stop
-                            // Set classifying flag BEFORE the AJAX call
-                            isClassifying = true;
-
-                            // Create a blinking effect to indicate active listening
-                            const startPulsing = () => {
-                                let pulseState = true;
-                                if (pulseInterval) {
-                                    clearInterval(pulseInterval);
-                                }
-                                pulseInterval = setInterval(() => {
-                                    if (!isClassifying) {
-                                        clearInterval(pulseInterval);
-                                        audioClassificationResult.style.opacity = "1";
-                                        return;
-                                    }
-
-                                    pulseState = !pulseState;
-                                    audioClassificationResult.style.opacity = pulseState ? "1" : "0.7";
-                                }, 1000); // Pulse every second
-                            };
-
-                            $.ajax({
-                                url: '/start-audio-classification?device=' + encodeURIComponent(selectedDevice),
-                                type: 'GET',
-                                success: function(response) {
-                                    console.log("[Audio] Start SUCCESS:", response);
-                                    audioClassificationResult.textContent = "Listening...";
-                                    audioClassificationResult.classList.add('waiting');
-                                    stopAudioButton.disabled = false;
-
-                                    // Update status
-                                    if (statusText) {
-                                        statusText.textContent = 'Active - Listening';
-                                    }
-
-                                    // Start diagnostics
-                                    startDiagnostics();
-
-                                    // Send status update via WebSocket
-                                    if (wsAudio && wsAudio.readyState === WebSocket.OPEN) {
-                                        wsAudio.send(JSON.stringify({type: "client_status", status: "started"}));
-                                    }
-                                },
-                                error: function(xhr, status, error) {
-                                    console.error("[Audio] Start ERROR:", error);
-                                    let errorMessage = error;
-
-                                    // Handle "already running" error specifically
-                                    if (xhr.responseText && xhr.responseText.indexOf('already running') !== -1) {
-                                        console.log("[Audio] Classification already running - treating as success");
-                                        audioClassificationResult.label = "Listening... (reconnected)";
-                                        stopAudioButton.disabled = false;
-                                        isClassifying = true;
-                                        return; // Exit early - we're treating this as success
-                                    }
-
-                                    audioClassificationResult.label = "Error: " + errorMessage;
-                                    startAudioButton.disabled = false;
-                                    stopAudioButton.disabled = true;
-                                    isClassifying = false;
-                                    if (wsAudio) {
-                                        wsAudio.close();
-                                        wsAudio = null;
-                                    }
-                                }
-                            });
-                        }
-                    });
-                });
-            }
+            // Audio classification functionality removed - meeting controls handle this independently
 
             // ===== MEETING CONTROLS - INDEPENDENT OF AUDIO BUTTONS =====
             console.log("=== Meeting Controls Init ===");
@@ -721,6 +574,11 @@ var init = function() {
             const startMeetingButton = document.getElementById('start_meeting_button');
             const stopMeetingButton = document.getElementById('stop_meeting_button');
             const meetingStatus = document.getElementById('meeting_status');
+
+            console.log("Meeting Controls Debug:");
+            console.log("  startMeetingButton:", startMeetingButton ? "FOUND" : "NOT FOUND");
+            console.log("  stopMeetingButton:", stopMeetingButton ? "FOUND" : "NOT FOUND");
+            console.log("  meetingStatus:", meetingStatus ? "FOUND" : "NOT FOUND");
 
             // Meeting state variables
             let meetingActive = false;
@@ -747,6 +605,7 @@ var init = function() {
 
             // Start Meeting Function
             if (startMeetingButton) {
+                console.log("Registering Start Meeting button click handler");
                 startMeetingButton.addEventListener('click', function() {
                     console.log(">>> START MEETING BUTTON CLICKED <<<");
                     if (!selectedDevice) {
@@ -784,6 +643,7 @@ var init = function() {
 
             // Stop Meeting Function
             if (stopMeetingButton) {
+                console.log("Registering Stop Meeting button click handler");
                     stopMeetingButton.addEventListener('click', function() {
                         console.log(">>> STOP MEETING BUTTON CLICKED <<<");
 
