@@ -151,8 +151,8 @@ var init = function() {
             const fetchDevicesButton = document.getElementById('fetch_devices_button');
             const audioClassificationResult = document.getElementById('audio_classification_result');
 
-            let selectedDevice = "dsoundcard"; // Fixed device for AM62dx
-            let audioDevices = ["dsoundcard"];
+            let selectedDevice = "default"; // Use default ALSA device
+            let audioDevices = ["default"];
             let classificationStats = {
                 total: 0,
                 uniqueClasses: new Set(),
@@ -165,7 +165,7 @@ var init = function() {
 
             // Initialize with fixed device - no audio buttons needed
             if (audioClassificationResult) {
-                audioClassificationResult.textContent = "Ready: dsoundcard (AM62dx Audio)";
+                audioClassificationResult.textContent = "Ready: default (System Audio Input)";
                 audioClassificationResult.classList.remove('waiting');
             }
 
@@ -616,6 +616,19 @@ var init = function() {
                     meetingActive = true;
                     meetingStartTime = Date.now();
 
+                    // Reset classification stats for meeting session
+                    classificationStats = {
+                        total: 0,
+                        uniqueClasses: new Set(),
+                        startTime: Date.now(),
+                        lastUpdateTime: null,
+                        history: []
+                    };
+
+                    // Start session timer for real-time updates
+                    if (sessionTimer) clearInterval(sessionTimer);
+                    sessionTimer = setInterval(updateSessionTime, 1000);
+
                     // Reset meeting analytics
                     meetingAnalytics = {
                         confidenceScores: [],
@@ -633,8 +646,8 @@ var init = function() {
                     startMeetingButton.disabled = true;
                     stopMeetingButton.disabled = false;
 
-                    // Start audio classification with dsoundcard
-                    console.log("[Meeting] Starting audio classification with dsoundcard");
+                    // Start audio classification with default device
+                    console.log("[Meeting] Starting audio classification with default device");
 
                     // Start WebSocket connection for results
                     if (!wsAudio) {
@@ -825,19 +838,25 @@ var init = function() {
                              quality === 'Fair' ? 'warning' : 'danger');
                     }
 
-                    // 2. Speech Level (percentage of speech vs total classifications)
+                    // 2. Top Detected Class (most frequent classification)
                     const speechLevelElem = document.getElementById('speech_level');
                     if (speechLevelElem && classificationStats.history.length > 0) {
-                        // Count speech-related classifications
-                        const speechClasses = ['Speech', 'Conversation', 'Narration', 'Child speech'];
-                        const speechCount = classificationStats.history.filter(item =>
-                            speechClasses.some(speechClass => item.class.includes(speechClass))
-                        ).length;
+                        // Count all classifications
+                        const classCount = {};
+                        classificationStats.history.forEach(item => {
+                            classCount[item.class] = (classCount[item.class] || 0) + 1;
+                        });
 
-                        const speechPercentage = Math.round((speechCount / classificationStats.history.length) * 100);
-                        speechLevelElem.textContent = speechPercentage + '%';
-                        speechLevelElem.className = 'analytics-value ' +
-                            (speechPercentage >= 60 ? 'good' : speechPercentage >= 30 ? 'warning' : 'danger');
+                        // Find the most frequent class
+                        const topClass = Object.entries(classCount)
+                            .sort(([,a], [,b]) => b - a)[0];
+
+                        if (topClass) {
+                            const topPercentage = Math.round((topClass[1] / classificationStats.history.length) * 100);
+                            speechLevelElem.textContent = `${topClass[0]}: ${topPercentage}%`;
+                            speechLevelElem.className = 'analytics-value ' +
+                                (topPercentage >= 60 ? 'good' : topPercentage >= 30 ? 'warning' : 'danger');
+                        }
                     } else if (speechLevelElem) {
                         speechLevelElem.textContent = '--';
                         speechLevelElem.className = 'analytics-value';
@@ -909,16 +928,33 @@ var init = function() {
                         .sort(([,a], [,b]) => b - a)
                         .slice(0, 5);
 
-                    let html = '<ul>';
+                    let html = '<div class="top-classes-grid">';
                     if (sortedClasses.length === 0) {
-                        html += '<li>No classifications recorded</li>';
+                        html += '<div class="no-data">No classifications recorded</div>';
                     } else {
-                        sortedClasses.forEach(([className, count]) => {
+                        sortedClasses.forEach(([className, count], index) => {
                             const percentage = ((count / classificationStats.total) * 100).toFixed(1);
-                            html += `<li><strong>${className}</strong>: ${count} times (${percentage}%)</li>`;
+                            const rank = index + 1;
+
+                            // Color coding based on rank
+                            let colorClass = 'rank-default';
+                            if (rank === 1) colorClass = 'rank-first';
+                            else if (rank === 2) colorClass = 'rank-second';
+                            else if (rank === 3) colorClass = 'rank-third';
+
+                            html += `
+                                <div class="class-item ${colorClass}">
+                                    <div class="class-rank">#${rank}</div>
+                                    <div class="class-info">
+                                        <div class="class-name">${className}</div>
+                                        <div class="class-stats">${count} detections • ${percentage}%</div>
+                                    </div>
+                                    <div class="class-percentage">${percentage}%</div>
+                                </div>
+                            `;
                         });
                     }
-                    html += '</ul>';
+                    html += '</div>';
 
                     document.getElementById('top_classes').innerHTML = html;
                 }
@@ -926,23 +962,76 @@ var init = function() {
                 function generateRecommendations(quality, confidence, rms) {
                     let recommendations = [];
 
+                    // Calculate actual class distribution for smart recommendations
+                    const classCount = {};
+                    let totalClassifications = classificationStats.total;
+
+                    classificationStats.history.forEach(item => {
+                        classCount[item.class] = (classCount[item.class] || 0) + 1;
+                    });
+
+                    // Sort classes by frequency
+                    const sortedClasses = Object.entries(classCount)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5);
+
+                    // Generate intelligent recommendations based on actual data
+                    if (totalClassifications === 0) {
+                        recommendations.push('❌ No audio classifications detected - check audio input');
+                        return;
+                    }
+
+                    // Check for silence dominance
+                    const silenceCount = classCount['Silence'] || 0;
+                    const silencePercentage = (silenceCount / totalClassifications) * 100;
+
+                    if (silencePercentage > 60) {
+                        recommendations.push(`🔇 High silence detected (${silencePercentage.toFixed(1)}%) - participants may be muted or inactive`);
+                    }
+
+                    // Check for speech activity
+                    const speechClasses = ['Speech', 'Male speech', 'Female speech', 'Child speech', 'Conversation', 'Narration'];
+                    const speechCount = speechClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
+                    const speechPercentage = (speechCount / totalClassifications) * 100;
+
+                    if (speechPercentage > 50) {
+                        recommendations.push(`🗣️ Good speech activity (${speechPercentage.toFixed(1)}%) - active participation detected`);
+                    } else if (speechPercentage < 20) {
+                        recommendations.push(`📢 Low speech activity (${speechPercentage.toFixed(1)}%) - encourage more participation`);
+                    }
+
+                    // Check for background noise/distractions
+                    const noiseClasses = ['Music', 'Background music', 'Noise', 'White noise', 'Pink noise'];
+                    const noiseCount = noiseClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
+                    const noisePercentage = (noiseCount / totalClassifications) * 100;
+
+                    if (noisePercentage > 15) {
+                        recommendations.push(`🔊 Background noise detected (${noisePercentage.toFixed(1)}%) - consider muting when not speaking`);
+                    }
+
+                    // Check for laughter/engagement
+                    const engagementClasses = ['Laughter', 'Chuckle', 'Giggle'];
+                    const engagementCount = engagementClasses.reduce((sum, cls) => sum + (classCount[cls] || 0), 0);
+                    const engagementPercentage = (engagementCount / totalClassifications) * 100;
+
+                    if (engagementPercentage > 5) {
+                        recommendations.push(`😄 Positive engagement detected (${engagementPercentage.toFixed(1)}% laughter) - great meeting atmosphere!`);
+                    }
+
+                    // Audio quality recommendations
                     if (parseFloat(confidence) < 70) {
-                        recommendations.push('🎯 Consider improving microphone positioning for better accuracy');
+                        recommendations.push('🎯 Low classification confidence - check microphone quality');
                     }
-                    if (parseFloat(rms) < 25) {
-                        recommendations.push('🔊 Audio levels are low - check microphone gain settings');
+
+                    // Meeting length recommendations
+                    if (totalClassifications > 100) {
+                        recommendations.push(`📊 Comprehensive analysis completed (${totalClassifications} samples) - reliable data collected`);
+                    } else if (totalClassifications < 30) {
+                        recommendations.push('⏱️ Short meeting detected - longer sessions provide more accurate insights');
                     }
-                    if (quality === 'Poor' || quality === 'Fair') {
-                        recommendations.push('⚙️ Review audio setup and reduce background noise');
-                    }
-                    if (classificationStats.total < 10) {
-                        recommendations.push('⏱️ Consider longer meeting sessions for better analytics');
-                    }
-                    if (classificationStats.total > 0) {
-                        recommendations.push('✅ Meeting analytics successfully captured');
-                    }
+
                     if (recommendations.length === 0) {
-                        recommendations.push('🎉 Excellent meeting quality - all metrics are optimal!');
+                        recommendations.push('✅ Meeting completed successfully with good audio quality');
                     }
 
                     let html = '<ul>';

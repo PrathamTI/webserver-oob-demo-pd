@@ -2697,10 +2697,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         .meeting-summary {
             background-color: white;
             border-radius: 10px;
-            padding: 30px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
+            padding: 40px;
+            max-width: 900px;
+            width: 95%;
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
@@ -2737,6 +2737,91 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         .close-summary:hover {
             background-color: #0f7a88;
         }
+
+        /* Top Classes Grid Styles */
+        .top-classes-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .class-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 4px solid #148C9C;
+            transition: all 0.3s ease;
+        }
+
+        .class-item:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .class-item.rank-first {
+            border-left-color: #ffd700;
+            background: linear-gradient(135deg, #fff9e6 0%, #f8f9fa 100%);
+        }
+
+        .class-item.rank-second {
+            border-left-color: #c0c0c0;
+            background: linear-gradient(135deg, #f5f5f5 0%, #f8f9fa 100%);
+        }
+
+        .class-item.rank-third {
+            border-left-color: #cd7f32;
+            background: linear-gradient(135deg, #fff5e6 0%, #f8f9fa 100%);
+        }
+
+        .class-rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: #148C9C;
+            margin-right: 15px;
+            min-width: 40px;
+        }
+
+        .rank-first .class-rank { color: #ffd700; }
+        .rank-second .class-rank { color: #c0c0c0; }
+        .rank-third .class-rank { color: #cd7f32; }
+
+        .class-info {
+            flex: 1;
+        }
+
+        .class-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .class-stats {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .class-percentage {
+            font-size: 22px;
+            font-weight: bold;
+            color: #148C9C;
+            text-align: right;
+            min-width: 80px;
+        }
+
+        .rank-first .class-percentage { color: #ffd700; }
+        .rank-second .class-percentage { color: #c0c0c0; }
+        .rank-third .class-percentage { color: #cd7f32; }
+
+        .no-data {
+            text-align: center;
+            color: #999;
+            padding: 20px;
+            font-style: italic;
+        }
     </style>
 
     <div class="audio-classification-container">
@@ -2748,10 +2833,10 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
 
             <div id="device_list_container" class="device-grid">
-                <div class="device-card selected" data-device="dsoundcard">
+                <div class="device-card selected" data-device="default">
                     <div class="device-info">
-                        <div class="device-name">AM62dx Audio Input (Fixed)</div>
-                        <div class="device-id">dsoundcard - GStreamer Pipeline</div>
+                        <div class="device-name">Default Audio Input</div>
+                        <div class="device-id">default - System Audio Device</div>
                     </div>
                     <div class="device-status selected">Ready</div>
                 </div>
@@ -2852,14 +2937,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             </div>
         </div>
 
-        <div class="audio-info-section history-section">
-            <h3>Classification History</h3>
-            <div id="classification_history" class="classification-history">
-                <div style="text-align: center; color: #999; padding: 20px;">
-                    No classifications yet. Start audio classification to see results here.
-                </div>
-            </div>
-        </div>
+        <!-- Classification History removed to save space -->
     </div>
 
     <!-- Meeting Summary Modal (initially hidden) -->

@@ -190,8 +190,9 @@ void* gst_launch_thread(void *arg) {
     const char *device = g_selected_device ? g_selected_device : "plughw:0,0";
 
     char gst_command[2048]; // Increased buffer size for gst_command
+    
     snprintf(gst_command, sizeof(gst_command),
-             "gst-launch-1.0 alsasrc device=dsoundcard ! "
+             "gst-launch-1.0 alsasrc device=%s ! "
              "audioconvert ! audioresample ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! "
              "tensor_converter frames-per-tensor=3900 ! "
              "tensor_aggregator frames-in=3900 frames-out=15600 frames-flush=3900 frames-dim=1 ! "
@@ -204,6 +205,18 @@ void* gst_launch_thread(void *arg) {
              device, fifo_path);
 
     fprintf(stderr, "Starting GStreamer with device: %s\n", device);
+
+    // Execute Dante commands before starting GStreamer pipeline
+    fprintf(stderr, "Stopping Dante services...\n");
+    system("cd /opt/dep/dante_package && ./dep.sh stop");
+
+    fprintf(stderr, "Waiting 1 second...\n");
+    sleep(1);
+
+    fprintf(stderr, "Starting Dante services...\n");
+    system("cd /opt/dep/dante_package && ./dep.sh start");
+
+    fprintf(stderr, "Dante services restarted, now starting GStreamer pipeline...\n");
 
     // Execute the GStreamer pipeline
     FILE *pipe = popen(gst_command, "r");
