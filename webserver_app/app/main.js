@@ -966,15 +966,15 @@ var init = function() {
                                                      confidence >= 40 ? '🧡' : '❤️';
                         }
 
-                        // Update quality value color
+                        // Update quality value color to match dot colors
                         if (confidence >= 75) {
-                            liveQualityElem.style.color = '#5cb85c'; // Green
+                            liveQualityElem.style.color = '#22c55e'; // Green to match 💚
                         } else if (confidence >= 60) {
-                            liveQualityElem.style.color = '#f0ad4e'; // Yellow
+                            liveQualityElem.style.color = '#eab308'; // Yellow to match 💛
                         } else if (confidence >= 40) {
-                            liveQualityElem.style.color = '#ff9800'; // Orange
+                            liveQualityElem.style.color = '#f97316'; // Orange to match 🧡
                         } else {
-                            liveQualityElem.style.color = '#d9534f'; // Red
+                            liveQualityElem.style.color = '#ef4444'; // Red to match ❤️
                         }
                     }
 
