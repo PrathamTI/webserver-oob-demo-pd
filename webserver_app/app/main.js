@@ -633,8 +633,28 @@ var init = function() {
                     startMeetingButton.disabled = true;
                     stopMeetingButton.disabled = false;
 
-                    // Audio classification would be started here if needed
-                    // For now, meeting controls work independently
+                    // Start audio classification with dsoundcard
+                    console.log("[Meeting] Starting audio classification with dsoundcard");
+
+                    // Start WebSocket connection for results
+                    if (!wsAudio) {
+                        console.log("[Meeting] Setting up WebSocket connection");
+                        setupAudioWebSocket();
+                    }
+
+                    // Start audio classification backend
+                    $.ajax({
+                        url: '/start-audio-classification?device=' + encodeURIComponent(selectedDevice),
+                        type: 'GET',
+                        success: function(response) {
+                            console.log("[Meeting] Audio classification started:", response);
+                            isClassifying = true;
+                        },
+                        error: function(xhr, status, error) {
+                            console.error("[Meeting] Failed to start audio classification:", error);
+                            alert("Failed to start audio classification: " + error);
+                        }
+                    });
 
                     // Start analytics collection
                     startAnalyticsCollection();
@@ -657,9 +677,20 @@ var init = function() {
                         startMeetingButton.disabled = false;
                         stopMeetingButton.disabled = true;
 
-                        // Audio classification would be stopped here if needed
-                        // For now, meeting controls work independently
-                        isClassifying = false;
+                        // Stop audio classification
+                        console.log("[Meeting] Stopping audio classification");
+                        $.ajax({
+                            url: '/stop-audio-classification',
+                            type: 'GET',
+                            success: function(response) {
+                                console.log("[Meeting] Audio classification stopped:", response);
+                                isClassifying = false;
+                            },
+                            error: function(xhr, status, error) {
+                                console.error("[Meeting] Failed to stop audio classification:", error);
+                                isClassifying = false;
+                            }
+                        });
 
                         // Stop analytics collection
                         stopAnalyticsCollection();
@@ -946,7 +977,11 @@ var init = function() {
 
             function updateCpuLoad() {
                 $.get("/cpu-load", function(data) {
-                    templateObj.$.gauge1.value = data;
+                    if (templateObj && templateObj.$ && templateObj.$.gauge1) {
+                        templateObj.$.gauge1.value = data;
+                    } else {
+                        console.log("CPU Load:", data, "% (gauge1 element not found)");
+                    }
                 });
             }
 
