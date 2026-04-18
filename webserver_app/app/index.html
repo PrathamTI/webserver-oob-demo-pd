@@ -2139,6 +2139,347 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     </ti-widget-vtab>
     <ti-widget-vtab id="ti_widget_vtab_audio_classification" name="Audio Classification" caption="Live Audio Classification" icon="av:mic" icon-style="width:30px;height:30px;padding:5px;" visible font-size="inherit" auto-scroll font-style="normal" font-weight="normal" text-align="left" text-decoration="none" autoscroll title>
     <style>
+        /* Meeting Dashboard Styles */
+        .meeting-dashboard {
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #f5f2f0 0%, #e8e0db 100%);
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .dashboard-title {
+            font-size: 2.5em;
+            font-weight: 400;
+            color: #7a7a7a;
+            margin: 0;
+            letter-spacing: -0.02em;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: start;
+        }
+
+        /* Left Column Styles */
+        .dashboard-left {
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .session-time-card {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .session-label {
+            font-size: 1.1em;
+            color: #999;
+            margin-bottom: 5px;
+            font-weight: 400;
+        }
+
+        .session-time {
+            font-size: 2.2em;
+            font-weight: 300;
+            color: #666;
+            font-family: 'Courier New', monospace;
+        }
+
+        .meeting-controls-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .dashboard-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 220px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #db6c6c 0%, #c55a5a 100%);
+            color: white;
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(219, 108, 108, 0.3);
+        }
+
+        .end-btn {
+            background: linear-gradient(135deg, #b85555 0%, #a84848 100%);
+            color: white;
+        }
+
+        .end-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(184, 85, 85, 0.3);
+        }
+
+        .dashboard-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .button-icon {
+            font-size: 1.2em;
+        }
+
+        .active-nodes-section {
+            text-align: center;
+        }
+
+        .nodes-title {
+            font-size: 1.3em;
+            color: #7a7a7a;
+            margin-bottom: 25px;
+            font-weight: 400;
+        }
+
+        .nodes-grid {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .node-avatar {
+            position: relative;
+        }
+
+        .avatar-placeholder {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e0e0e0 0%, #d0d0d0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .avatar-placeholder:hover {
+            transform: scale(1.05);
+        }
+
+        .avatar-initials {
+            font-size: 0.9em;
+            font-weight: 600;
+            color: #666;
+        }
+
+        /* Right Column Styles */
+        .dashboard-right {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .live-classification-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            color: #7a7a7a;
+            margin: 0 0 30px 0;
+            font-weight: 400;
+            text-align: center;
+        }
+
+        .current-classification {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .classification-label {
+            font-size: 1em;
+            color: #999;
+            margin-bottom: 10px;
+            font-weight: 400;
+        }
+
+        .classification-result {
+            font-size: 2.2em;
+            font-weight: 300;
+            color: #db6c6c;
+            letter-spacing: -0.02em;
+            padding: 15px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background-color: transparent;
+        }
+
+        /* Dynamic classification background colors */
+        .classification-result.speech {
+            background-color: rgba(92, 184, 92, 0.15);
+            color: #2e7d2e;
+        }
+
+        .classification-result.music {
+            background-color: rgba(153, 102, 255, 0.15);
+            color: #6a4c93;
+        }
+
+        .classification-result.silence {
+            background-color: rgba(108, 117, 125, 0.15);
+            color: #495057;
+        }
+
+        .classification-result.question {
+            background-color: rgba(255, 193, 7, 0.15);
+            color: #b8860b;
+        }
+
+        .classification-result.laughter {
+            background-color: rgba(255, 107, 107, 0.15);
+            color: #dc3545;
+        }
+
+        .classification-result.conversation {
+            background-color: rgba(32, 201, 151, 0.15);
+            color: #198754;
+        }
+
+        .unique-classes {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .metric-label {
+            font-size: 1em;
+            color: #999;
+            margin-bottom: 5px;
+        }
+
+        .metric-number {
+            font-size: 3em;
+            font-weight: 200;
+            color: #666;
+        }
+
+        .audio-quality {
+            margin-bottom: 25px;
+        }
+
+        .quality-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .quality-label {
+            font-size: 1em;
+            color: #999;
+            font-weight: 400;
+        }
+
+        .quality-icon {
+            font-size: 1.2em;
+        }
+
+        .quality-value {
+            font-size: 1.4em;
+            font-weight: 500;
+            color: #5cb85c;
+        }
+
+        .audio-level {
+            margin-bottom: 20px;
+        }
+
+        .level-label {
+            font-size: 1em;
+            color: #999;
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+
+        .level-bars {
+            display: flex;
+            gap: 4px;
+            align-items: end;
+            height: 60px;
+        }
+
+        .level-bars .bar {
+            flex: 1;
+            background: #e0e0e0;
+            border-radius: 3px 3px 0 0;
+            transition: all 0.3s ease;
+            min-height: 8px;
+        }
+
+        .level-bars .bar.active {
+            background: linear-gradient(to top, #5cb85c 0%, #7dd87d 100%);
+        }
+
+        .level-bars .bar:nth-child(-n+5) {
+            height: 20%;
+        }
+        .level-bars .bar:nth-child(n+6):nth-child(-n+10) {
+            height: 50%;
+        }
+        .level-bars .bar:nth-child(n+11) {
+            height: 80%;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .dashboard-container {
+                padding: 20px;
+            }
+
+            .nodes-grid {
+                gap: 10px;
+            }
+
+            .avatar-placeholder {
+                width: 60px;
+                height: 60px;
+            }
+        }
+
         .audio-classification-container {
             padding: 20px;
             font-family: Arial, sans-serif;
@@ -2680,18 +3021,359 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             margin-top: 8px;
         }
 
-        /* Meeting Summary Modal */
+        /* Meeting Summary Modal - New Design */
         .meeting-summary-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background: linear-gradient(135deg, rgba(245, 242, 240, 0.95) 0%, rgba(232, 224, 219, 0.95) 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            backdrop-filter: blur(10px);
+        }
+
+        .meeting-summary-modal {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            padding: 25px;
+            max-width: 700px;
+            width: 85%;
+            max-height: 85vh;
+            overflow: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            font-weight: 400;
+            color: #7a7a7a;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-btn:hover {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+
+        .summary-cards-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+            margin-bottom: 5px;
+        }
+
+        .summary-card {
+            background: #fefefe;
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            min-height: 200px;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            font-size: 1.2em;
+        }
+
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.1em;
+            font-weight: 500;
+            color: #666;
+        }
+
+        /* Duration Card */
+        .duration-card {
+            background: linear-gradient(135deg, #fff9f5 0%, #fef5f0 100%);
+        }
+
+        .main-duration {
+            font-size: 2.5em;
+            font-weight: 300;
+            color: #db6c6c;
+            margin-bottom: 15px;
+        }
+
+        .time-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .time-label {
+            color: #666;
+            font-weight: 400;
+        }
+
+        .time-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Classification Card */
+        .classification-card {
+            background: linear-gradient(135deg, #f8fffe 0%, #f0faf8 100%);
+        }
+
+        .classification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .pie-chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 120px;
+        }
+
+        .pie-chart-summary {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: conic-gradient(
+                #ff6b6b 0deg 130deg,
+                #4ecdc4 130deg 200deg,
+                #45b7d1 200deg 280deg,
+                #f9ca24 280deg 360deg
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .pie-chart-summary::after {
+            content: '';
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .classification-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .classification-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .class-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .class-name {
+            flex: 1;
+            color: #666;
+        }
+
+        .class-count {
+            color: #333;
+            font-weight: 500;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .mini-bar-chart {
+            height: 30px;
+            display: flex;
+            align-items: end;
+            gap: 3px;
+            padding: 0 20px;
+        }
+
+        .bar-chart-mini {
+            display: flex;
+            gap: 2px;
+            height: 100%;
+            align-items: end;
+            flex: 1;
+        }
+
+        /* Meeting Insight Card */
+        .insight-card {
+            background: linear-gradient(135deg, #fefbf0 0%, #fdf5e6 100%);
+        }
+
+        .quality-summary {
+            margin-bottom: 15px;
+        }
+
+        .quality-header {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .insight-text {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .metrics-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9em;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        /* Recommendations Card */
+        .recommendations-card {
+            background: linear-gradient(135deg, #f5f8ff 0%, #eef4ff 100%);
+        }
+
+        .recommendations-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .recommendations-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .recommendation-item {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+            padding: 5px 0;
+        }
+
+        .close-summary-btn {
+            background: linear-gradient(135deg, #db6c6c 0%, #c55a5a 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            align-self: center;
+        }
+
+        .close-summary-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(219, 108, 108, 0.3);
+        }
+
+        .modal-footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+        }
+
+        /* Fix close button styling */
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #999;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            line-height: 1;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .summary-cards-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .meeting-summary-modal {
+                padding: 20px;
+                margin: 20px;
+            }
+
+            .main-duration {
+                font-size: 2em;
+            }
         }
 
         .meeting-summary {
@@ -2822,48 +3504,417 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             padding: 20px;
             font-style: italic;
         }
+
+        /* Session Timer Corner */
+        .session-timer-corner {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            background: rgba(20, 140, 156, 0.1);
+            border: 2px solid #148C9C;
+            border-radius: 8px;
+            padding: 8px 12px;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .timer-label {
+            font-size: 12px;
+            color: #148C9C;
+            font-weight: 500;
+        }
+
+        .timer-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #148C9C;
+            margin-top: 2px;
+        }
+
+        /* Live Audio Metrics */
+        .live-audio-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .audio-metric-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .audio-metric-card:hover {
+            border-color: #148C9C;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(20, 140, 156, 0.15);
+        }
+
+        .audio-metric-card h4 {
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #148C9C;
+            margin-bottom: 10px;
+        }
+
+        .metric-bar {
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #148C9C, #20a8ba);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Compact Stats Grid */
+        .stats-grid-compact {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Chart Styles */
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .bar-chart-section, .pie-chart-section {
+            text-align: center;
+        }
+
+        .bar-chart-section h4, .pie-chart-section h4 {
+            color: #148C9C;
+            margin-bottom: 15px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .bar-label {
+            min-width: 100px;
+            font-size: 12px;
+            text-align: right;
+            color: #666;
+        }
+
+        .bar-container {
+            flex: 1;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #148C9C;
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .pie-chart-display {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+            background: conic-gradient(#148C9C 0deg, #20a8ba 72deg, #ffd700 144deg, #c0c0c0 216deg, #cd7f32 288deg, #6c757d 360deg);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pie-chart-center {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #148C9C;
+        }
     </style>
 
-    <div class="audio-classification-container">
-        <div class="audio-info-section">
-            <h3>Audio Input Configuration</h3>
-
-            <div class="control-section" style="display: none;">
-                <!-- Device selection disabled - using fixed dsoundcard -->
+    <!-- New Meeting Dashboard Design -->
+    <div class="meeting-dashboard">
+        <div class="dashboard-container">
+            <!-- Header -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Meeting Dashboard</h1>
             </div>
 
-            <div id="device_list_container" class="device-grid">
-                <div class="device-card selected" data-device="default">
-                    <div class="device-info">
-                        <div class="device-name">Default Audio Input</div>
-                        <div class="device-id">default - System Audio Device</div>
+            <!-- Main Content Grid -->
+            <div class="dashboard-content">
+                <!-- Left Column -->
+                <div class="dashboard-left">
+                    <!-- Session Timer -->
+                    <div class="session-time-card">
+                        <div class="session-label">Session Time:</div>
+                        <div id="session_time" class="session-time">00:00:00</div>
                     </div>
-                    <div class="device-status selected">Ready</div>
-                </div>
-            </div>
 
-            <!-- Meeting Controls -->
-            <div class="meeting-controls">
-                <h3 style="margin-top: 0; color: #148C9C;">Meeting Control Center</h3>
-                <button id="start_meeting_button" class="meeting-button start">
-                    🎙️ Start Meeting
-                </button>
-                <button id="stop_meeting_button" class="meeting-button stop" disabled>
-                    ⏹️ Stop Meeting
-                </button>
-                <div id="meeting_status" class="meeting-status inactive">
-                    Meeting Inactive
+                    <!-- Meeting Controls -->
+                    <div class="meeting-controls-section">
+                        <button id="start_meeting_button" class="dashboard-button start-btn">
+                            <span class="button-icon">▶</span>
+                            Start Meeting
+                        </button>
+                        <button id="stop_meeting_button" class="dashboard-button end-btn" disabled>
+                            <span class="button-icon">🔊</span>
+                            End Meeting
+                        </button>
+                    </div>
+
+                    <!-- Active Nodes Section -->
+                    <div class="active-nodes-section">
+                        <h3 class="nodes-title">Active Nodes</h3>
+                        <div class="nodes-grid">
+                            <div class="node-avatar">
+                                <div class="avatar-placeholder">
+                                    <span class="avatar-initials">U1</span>
+                                </div>
+                            </div>
+                            <div class="node-avatar">
+                                <div class="avatar-placeholder">
+                                    <span class="avatar-initials">U2</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div class="dashboard-right">
+                    <!-- Live Classification Section -->
+                    <div class="live-classification-card">
+                        <h3 class="card-title">Live Classification</h3>
+
+                        <!-- Current Classification -->
+                        <div class="current-classification">
+                            <div class="classification-label">Current Classification</div>
+                            <div id="audio_classification_result" class="classification-result">--</div>
+                        </div>
+
+                        <!-- Unique Classes -->
+                        <div class="unique-classes">
+                            <div class="metric-label">Unique Classes</div>
+                            <div id="unique_classes" class="metric-number">0</div>
+                        </div>
+
+                        <!-- Audio Quality -->
+                        <div class="audio-quality">
+                            <div class="quality-header">
+                                <span class="quality-label">Audio Quality</span>
+                                <span class="quality-icon">💚</span>
+                            </div>
+                            <div id="live_audio_quality" class="quality-value">Excellent</div>
+                        </div>
+
+                        <!-- Audio Level -->
+                        <div class="audio-level">
+                            <div class="level-label">Audio Level</div>
+                            <div id="audio_level_bars" class="level-bars">
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                                <div class="bar"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- Active Nodes Section -->
-        <div class="audio-info-section">
-            <div class="nodes-section">
-                <div class="nodes-header">
-                    <h3 class="nodes-title">Active Audio Nodes</h3>
-                    <div class="nodes-count" id="active_nodes_count">2</div>
+    <!-- Minimal compatibility elements for JS -->
+    <div style="display: none;">
+        <div id="device_list_container"></div>
+        <div id="meeting_status" class="meeting-status inactive">Meeting Inactive</div>
+        <div id="active_nodes_count">2</div>
+        <!-- Legacy elements for JavaScript compatibility -->
+        <div id="live_audio_level">--</div>
+        <div id="total_classifications">0</div>
+        <div id="audio_quality">--</div>
+        <div id="speech_level">--</div>
+        <div id="status_indicator" class="status-indicator inactive"></div>
+        <div id="status_text">Inactive</div>
+    </div>
+
+    <!-- Meeting Summary Modal (initially hidden) -->
+    <div id="meeting_summary_overlay" class="meeting-summary-overlay" style="display: none;">
+        <div class="meeting-summary-modal">
+            <!-- Header -->
+            <div class="modal-header">
+                <h2 class="modal-title">Meeting Summary</h2>
+                <button id="close_summary_button" class="close-btn">×</button>
+            </div>
+
+            <!-- 2x2 Card Grid -->
+            <div class="summary-cards-grid">
+                <!-- Meeting Duration Card -->
+                <div class="summary-card duration-card">
+                    <div class="card-header">
+                        <span class="card-icon">🕒</span>
+                        <h3>Meeting Duration</h3>
+                    </div>
+                    <div class="duration-display">
+                        <div class="main-duration" id="summary_duration">1hr 42min</div>
+                        <div class="time-details">
+                            <div class="time-item">
+                                <span class="time-label">🟢 Started:</span>
+                                <span class="time-value" id="summary_start_time">2:00 AM</span>
+                            </div>
+                            <div class="time-item">
+                                <span class="time-label">🟠 Ended:</span>
+                                <span class="time-value" id="summary_end_time">10:42 AM</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Classification Info Card -->
+                <div class="summary-card classification-card">
+                    <div class="card-header">
+                        <span class="card-icon">📊</span>
+                        <h3>Classification Info</h3>
+                    </div>
+                    <div class="classification-content">
+                        <!-- Pie Chart -->
+                        <div class="pie-chart-container">
+                            <div id="pie_chart" class="pie-chart-summary"></div>
+                        </div>
+
+                        <!-- Classification List -->
+                        <div class="classification-list">
+                            <div class="classification-item">
+                                <span class="class-color" style="background: #ff6b6b;"></span>
+                                <span class="class-name">Questions</span>
+                                <span class="class-count">12</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="class-color" style="background: #4ecdc4;"></span>
+                                <span class="class-name">Speech</span>
+                                <span class="class-count">8</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="class-color" style="background: #45b7d1;"></span>
+                                <span class="class-name">Discussion</span>
+                                <span class="class-count">5</span>
+                            </div>
+                            <div class="classification-item">
+                                <span class="class-color" style="background: #f9ca24;"></span>
+                                <span class="class-name">Silence</span>
+                                <span class="class-count">2</span>
+                            </div>
+                        </div>
+
+                        <!-- Bar Chart -->
+                        <div class="mini-bar-chart">
+                            <div id="bar_chart_mini" class="bar-chart-mini"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Meeting Insight Card -->
+                <div class="summary-card insight-card">
+                    <div class="card-header">
+                        <span class="card-icon">💡</span>
+                        <h3>Meeting Insight</h3>
+                    </div>
+                    <div class="insight-content">
+                        <div class="quality-summary">
+                            <div class="quality-header">Overall audio quality was <strong id="summary_audio_quality">Excellent</strong></div>
+                            <div class="insight-text" id="summary_insight_text">
+                                Throughout the meeting, ensuring clear and effective communication.
+                            </div>
+                        </div>
+
+                        <div class="metrics-summary">
+                            <div class="metric-row">
+                                <span class="metric-label">📈 Classifications:</span>
+                                <span class="metric-value" id="summary_total_classifications">--</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">🎯 Unique Classes:</span>
+                                <span class="metric-value" id="summary_unique_classes">--</span>
+                            </div>
+                            <div class="metric-row">
+                                <span class="metric-label">⭐ Quality Score:</span>
+                                <span class="metric-value" id="summary_quality_score">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recommendations Card -->
+                <div class="summary-card recommendations-card">
+                    <div class="card-header">
+                        <span class="card-icon">📝</span>
+                        <h3>Recommendations</h3>
+                    </div>
+                    <div class="recommendations-content">
+                        <div id="recommendations_list" class="recommendations-list">
+                            <!-- Recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Standalone Close Summary Button -->
+            <div class="modal-footer">
+                <button class="close-summary-btn">Close Summary</button>
+            </div>
+        </div>
+    </div>
+
+</ti-widget-vtab>
                 <div class="nodes-grid">
                     <div class="node-card">
                         <div class="node-name">
@@ -2887,6 +3938,12 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
         <div class="audio-info-section">
             <h3>Live Classification</h3>
+            <!-- Session Timer in Corner -->
+            <div class="session-timer-corner">
+                <div class="timer-label">Session</div>
+                <div id="session_time" class="timer-value">00:00</div>
+            </div>
+
             <div class="classification-metrics">
                 <div class="classification-display">
                     <div class="classification-label">Current Classification</div>
@@ -2899,8 +3956,26 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                     </div>
                 </div>
 
+                <!-- Live Audio Metrics -->
+                <div class="live-audio-metrics">
+                    <div class="audio-metric-card">
+                        <h4>Audio Quality</h4>
+                        <div id="live_audio_quality" class="metric-value">--</div>
+                        <div class="metric-bar">
+                            <div id="quality_bar" class="metric-fill"></div>
+                        </div>
+                    </div>
+                    <div class="audio-metric-card">
+                        <h4>Audio Level</h4>
+                        <div id="live_audio_level" class="metric-value">--</div>
+                        <div class="metric-bar">
+                            <div id="level_bar" class="metric-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="stats-container">
-                    <div class="stats-grid">
+                    <div class="stats-grid-compact">
                         <div class="stat-card">
                             <h4>Total Classifications</h4>
                             <div id="total_classifications" class="stat-value">0</div>
@@ -2908,14 +3983,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
                         <div class="stat-card">
                             <h4>Unique Classes</h4>
                             <div id="unique_classes" class="stat-value">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Session Time</h4>
-                            <div id="session_time" class="stat-value">00:00</div>
-                        </div>
-                        <div class="stat-card">
-                            <h4>Updates/Min</h4>
-                            <div id="update_rate" class="stat-value">0</div>
                         </div>
                     </div>
                 </div>
@@ -2957,14 +4024,31 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
             <div class="summary-section">
                 <h3>📊 Meeting Insights</h3>
                 <div id="meeting_insights">
-                    <p>🗣️ <strong>Speech Quality:</strong> <span id="summary_speech_quality">--</span></p>
+                    <p>🎵 <strong>Quality:</strong> <span id="summary_speech_quality">--</span></p>
                     <p>👥 <strong>Meeting Activity:</strong> <span id="summary_meeting_activity">--</span></p>
                     <p>🧠 <strong>AI Analysis:</strong> <span id="summary_total_classifications">--</span> Classifications • <span id="summary_unique_classes">--</span> Unique Classes</p>
                 </div>
             </div>
 
+            <!-- Visual Charts Section -->
             <div class="summary-section">
-                <h3>🎯 Most Detected Classes</h3>
+                <h3>📊 Classification Distribution</h3>
+                <div class="chart-container">
+                    <div class="chart-grid">
+                        <div class="bar-chart-section">
+                            <h4>Top 5 Classes</h4>
+                            <div id="bar_chart" class="bar-chart"></div>
+                        </div>
+                        <div class="pie-chart-section">
+                            <h4>Distribution Overview</h4>
+                            <div id="pie_chart" class="pie-chart-display"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-section">
+                <h3>🎯 Detailed Class Breakdown</h3>
                 <div id="top_classes">
                     <!-- Will be populated by JavaScript -->
                 </div>

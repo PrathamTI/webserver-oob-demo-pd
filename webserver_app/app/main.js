@@ -503,6 +503,9 @@ var init = function() {
                                     audioClassificationResult.textContent = result.class;
                                     audioClassificationResult.classList.remove('waiting');
 
+                                    // Add dynamic background color based on classification
+                                    updateClassificationBackground(audioClassificationResult, result.class);
+
                                     // Brief highlight animation
                                     audioClassificationResult.style.animation = 'none';
                                     setTimeout(() => {
@@ -861,6 +864,96 @@ var init = function() {
                         speechLevelElem.textContent = '--';
                         speechLevelElem.className = 'analytics-value';
                     }
+
+                    // Update Live Audio Quality and Level in Classification Block
+                    updateLiveAudioMetrics(confidence, rmsLevel);
+                }
+
+                function updateLiveAudioMetrics(confidence, rmsLevel) {
+                    // Update Live Audio Quality element
+                    const liveQualityElem = document.getElementById('live_audio_quality');
+                    if (liveQualityElem) {
+                        const qualityText = confidence >= 75 ? 'Excellent' :
+                                           confidence >= 60 ? 'Good' :
+                                           confidence >= 40 ? 'Fair' : 'Poor';
+
+                        liveQualityElem.textContent = qualityText;
+                        liveQualityElem.className = 'quality-value';
+
+                        // Update quality icon and color based on quality
+                        const qualityIcon = document.querySelector('.quality-icon');
+                        if (qualityIcon) {
+                            qualityIcon.textContent = confidence >= 75 ? '💚' :
+                                                     confidence >= 60 ? '💛' :
+                                                     confidence >= 40 ? '🧡' : '❤️';
+                        }
+
+                        // Update quality value color
+                        if (confidence >= 75) {
+                            liveQualityElem.style.color = '#5cb85c'; // Green
+                        } else if (confidence >= 60) {
+                            liveQualityElem.style.color = '#f0ad4e'; // Yellow
+                        } else if (confidence >= 40) {
+                            liveQualityElem.style.color = '#ff9800'; // Orange
+                        } else {
+                            liveQualityElem.style.color = '#d9534f'; // Red
+                        }
+                    }
+
+                    // Update Audio Level Bar Chart
+                    const levelBarsContainer = document.getElementById('audio_level_bars');
+                    if (levelBarsContainer && rmsLevel) {
+                        const bars = levelBarsContainer.querySelectorAll('.bar');
+                        const activeBars = Math.round(((rmsLevel - 25) / 30) * 15); // Convert RMS to 0-15 bars
+
+                        bars.forEach((bar, index) => {
+                            if (index < Math.max(0, activeBars)) {
+                                bar.classList.add('active');
+                            } else {
+                                bar.classList.remove('active');
+                            }
+                        });
+                    }
+
+                    // Update old elements for compatibility
+                    const liveLevelElem = document.getElementById('live_audio_level');
+                    if (liveLevelElem) {
+                        const levelText = rmsLevel >= 45 ? 'High' :
+                                         rmsLevel >= 35 ? 'Medium' :
+                                         rmsLevel >= 25 ? 'Low' : 'Very Low';
+
+                        liveLevelElem.textContent = `${levelText} (${rmsLevel} dB)`;
+
+                        // Update level progress bar (normalize RMS 25-55 dB to 0-100%)
+                        const levelProgress = document.querySelector('#live_audio_level + .progress-bar .progress-fill');
+                        if (levelProgress) {
+                            const levelPercent = Math.max(0, Math.min(100, ((rmsLevel - 25) / 30) * 100));
+                            levelProgress.style.width = `${levelPercent}%`;
+                        }
+                    }
+                }
+
+                // Update classification background color based on detected class
+                function updateClassificationBackground(element, classification) {
+                    // Remove all existing classification classes
+                    element.classList.remove('speech', 'music', 'silence', 'question', 'laughter', 'conversation');
+
+                    // Add appropriate class based on classification
+                    const lowerClass = classification.toLowerCase();
+
+                    if (lowerClass.includes('speech') || lowerClass.includes('male') || lowerClass.includes('female') || lowerClass.includes('child')) {
+                        element.classList.add('speech');
+                    } else if (lowerClass.includes('music') || lowerClass.includes('singing')) {
+                        element.classList.add('music');
+                    } else if (lowerClass.includes('silence')) {
+                        element.classList.add('silence');
+                    } else if (lowerClass.includes('question')) {
+                        element.classList.add('question');
+                    } else if (lowerClass.includes('laughter') || lowerClass.includes('laugh') || lowerClass.includes('giggle')) {
+                        element.classList.add('laughter');
+                    } else if (lowerClass.includes('conversation') || lowerClass.includes('narration')) {
+                        element.classList.add('conversation');
+                    }
                 }
 
                 // Meeting Summary Generation
@@ -881,17 +974,29 @@ var init = function() {
                     const avgResponseTime = meetingAnalytics.responseTime.length > 0 ?
                         (meetingAnalytics.responseTime.reduce((a, b) => a + b, 0) / meetingAnalytics.responseTime.length).toFixed(0) : 'N/A';
 
-                    // Update summary modal - Clean Format
+                    // Calculate audio quality rating first
+                    const audioQualityRating = avgConfidence >= 75 && avgRms >= 30 ? 'Excellent' :
+                                             avgConfidence >= 60 && avgRms >= 20 ? 'Good' :
+                                             avgConfidence >= 40 ? 'Fair' : 'Poor';
+
+                    // Update new summary modal format
                     document.getElementById('summary_duration').textContent = formatDuration(duration);
                     document.getElementById('summary_start_time').textContent = startTime;
                     document.getElementById('summary_end_time').textContent = endTime;
                     document.getElementById('summary_total_classifications').textContent = classificationStats.total;
                     document.getElementById('summary_unique_classes').textContent = classificationStats.uniqueClasses.size;
 
-                    // Clean Meeting Insights
-                    const audioQualityRating = avgConfidence >= 75 && avgRms >= 30 ? 'Excellent' :
-                                             avgConfidence >= 60 && avgRms >= 20 ? 'Good' :
-                                             avgConfidence >= 40 ? 'Fair' : 'Poor';
+                    // Update audio quality in insight card
+                    document.getElementById('summary_audio_quality').textContent = audioQualityRating;
+                    document.getElementById('summary_quality_score').textContent = `${avgConfidence}%`;
+
+                    // Update insight text
+                    const insightText = audioQualityRating === 'Excellent' ?
+                        'Throughout the meeting, ensuring clear and effective communication.' :
+                        audioQualityRating === 'Good' ?
+                        'Good audio quality maintained with minor variations.' :
+                        'Audio quality fluctuated, consider optimizing microphone settings.';
+                    document.getElementById('summary_insight_text').textContent = insightText;
 
                     // Calculate speech activity percentage
                     const speechClasses = ['Speech', 'Conversation', 'Narration', 'Child speech'];
@@ -916,6 +1021,9 @@ var init = function() {
 
                     // Show modal
                     document.getElementById('meeting_summary_overlay').style.display = 'flex';
+
+                    // Initialize close button functionality
+                    initializeCloseButtons();
                 }
 
                 function generateTopClasses() {
@@ -926,37 +1034,104 @@ var init = function() {
 
                     const sortedClasses = Object.entries(classCount)
                         .sort(([,a], [,b]) => b - a)
-                        .slice(0, 5);
+                        .slice(0, 4); // Only top 4 for the new modal
 
-                    let html = '<div class="top-classes-grid">';
+                    // Generate Bar Chart
+                    generateBarChart(sortedClasses);
+
+                    // Generate Pie Chart
+                    generatePieChart(sortedClasses);
+
+                    // Update the classification list in the new modal
+                    updateClassificationList(sortedClasses);
+                }
+
+                function updateClassificationList(sortedClasses) {
+                    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24'];
+                    const classificationList = document.querySelector('.classification-list');
+
+                    if (!classificationList) return;
+
+                    let html = '';
                     if (sortedClasses.length === 0) {
-                        html += '<div class="no-data">No classifications recorded</div>';
+                        html = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">No classifications recorded</div>';
                     } else {
                         sortedClasses.forEach(([className, count], index) => {
-                            const percentage = ((count / classificationStats.total) * 100).toFixed(1);
-                            const rank = index + 1;
-
-                            // Color coding based on rank
-                            let colorClass = 'rank-default';
-                            if (rank === 1) colorClass = 'rank-first';
-                            else if (rank === 2) colorClass = 'rank-second';
-                            else if (rank === 3) colorClass = 'rank-third';
-
+                            const color = colors[index] || '#999';
                             html += `
-                                <div class="class-item ${colorClass}">
-                                    <div class="class-rank">#${rank}</div>
-                                    <div class="class-info">
-                                        <div class="class-name">${className}</div>
-                                        <div class="class-stats">${count} detections • ${percentage}%</div>
-                                    </div>
-                                    <div class="class-percentage">${percentage}%</div>
+                                <div class="classification-item">
+                                    <span class="class-color" style="background: ${color};"></span>
+                                    <span class="class-name">${className}</span>
+                                    <span class="class-count">${count}</span>
                                 </div>
                             `;
                         });
                     }
-                    html += '</div>';
 
-                    document.getElementById('top_classes').innerHTML = html;
+                    classificationList.innerHTML = html;
+
+                    // Also update the pie chart area
+                    const pieChartContainer = document.querySelector('.pie-chart-container');
+                    if (pieChartContainer && sortedClasses.length === 0) {
+                        pieChartContainer.innerHTML = '<div style="text-align: center; color: #999; font-style: italic;">No data to display</div>';
+                    }
+                }
+
+                function generateBarChart(sortedClasses) {
+                    let html = '';
+                    const colors = ['#ffd700', '#c0c0c0', '#cd7f32', '#148C9C', '#6c757d'];
+
+                    sortedClasses.forEach(([className, count], index) => {
+                        const percentage = ((count / classificationStats.total) * 100).toFixed(1);
+                        html += `
+                            <div class="bar-item">
+                                <div class="bar-label">${className}</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill rank-${index + 1}" style="width: ${percentage}%; background: ${colors[index]}"></div>
+                                </div>
+                                <div style="min-width: 45px; font-weight: bold; color: ${colors[index]}">${percentage}%</div>
+                            </div>
+                        `;
+                    });
+
+                    document.getElementById('bar_chart').innerHTML = html;
+                }
+
+                function generatePieChart(sortedClasses) {
+                    const pieChartElement = document.getElementById('pie_chart');
+                    if (!pieChartElement) return;
+
+                    if (sortedClasses.length === 0) {
+                        pieChartElement.innerHTML = '<div style="text-align: center; color: #999; font-style: italic; padding: 20px;">No data to display</div>';
+                        return;
+                    }
+
+                    // Use same colors as classification list
+                    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24'];
+                    let totalPercentage = 0;
+                    let gradientStops = [];
+
+                    sortedClasses.forEach(([className, count], index) => {
+                        const percentage = (count / classificationStats.total) * 100;
+                        const startAngle = totalPercentage * 3.6; // Convert to degrees
+                        const endAngle = (totalPercentage + percentage) * 3.6;
+
+                        gradientStops.push(`${colors[index]} ${startAngle}deg ${endAngle}deg`);
+                        totalPercentage += percentage;
+                    });
+
+                    const gradientCSS = `conic-gradient(${gradientStops.join(', ')})`;
+
+                    const html = `
+                        <div class="pie-chart-summary" style="background: ${gradientCSS};">
+                            <div class="pie-chart-center">
+                                ${classificationStats.total}<br>
+                                <small>Total</small>
+                            </div>
+                        </div>
+                    `;
+
+                    pieChartElement.innerHTML = html;
                 }
 
                 function generateRecommendations(quality, confidence, rms) {
@@ -1034,13 +1209,26 @@ var init = function() {
                         recommendations.push('✅ Meeting completed successfully with good audio quality');
                     }
 
-                    let html = '<ul>';
-                    recommendations.forEach(rec => {
-                        html += `<li>${rec}</li>`;
-                    });
-                    html += '</ul>';
+                    // Update new recommendations format
+                    const recommendationsList = document.getElementById('recommendations_list');
+                    if (recommendationsList) {
+                        let html = '';
+                        recommendations.slice(0, 3).forEach(rec => { // Show only top 3 recommendations
+                            html += `<div class="recommendation-item">${rec}</div>`;
+                        });
+                        recommendationsList.innerHTML = html;
+                    }
 
-                    document.getElementById('recommendations').innerHTML = html;
+                    // Keep old format for compatibility
+                    const oldRecommendations = document.getElementById('recommendations');
+                    if (oldRecommendations) {
+                        let html = '<ul>';
+                        recommendations.forEach(rec => {
+                            html += `<li>${rec}</li>`;
+                        });
+                        html += '</ul>';
+                        oldRecommendations.innerHTML = html;
+                    }
                 }
 
                 function formatDuration(seconds) {
@@ -1061,6 +1249,31 @@ var init = function() {
                 window.closeMeetingSummary = function() {
                     document.getElementById('meeting_summary_overlay').style.display = 'none';
                 };
+
+                // Initialize close button functionality when summary is opened
+                function initializeCloseButtons() {
+                    // Top-right × close button
+                    const topCloseBtn = document.getElementById('close_summary_button');
+                    if (topCloseBtn) {
+                        topCloseBtn.onclick = window.closeMeetingSummary;
+                    }
+
+                    // Bottom "Close Summary" button
+                    const bottomCloseBtn = document.querySelector('.close-summary-btn');
+                    if (bottomCloseBtn) {
+                        bottomCloseBtn.onclick = window.closeMeetingSummary;
+                    }
+
+                    // Close on overlay click (outside modal)
+                    const overlay = document.getElementById('meeting_summary_overlay');
+                    if (overlay) {
+                        overlay.onclick = function(e) {
+                            if (e.target === overlay) {
+                                window.closeMeetingSummary();
+                            }
+                        };
+                    }
+                }
 
             // Meeting controls initialized above - no device selection needed
 
