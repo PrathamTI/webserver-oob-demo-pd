@@ -149,8 +149,6 @@ var init = function() {
             console.log("=== Audio Classification Init ===");
 
             const fetchDevicesButton = document.getElementById('fetch_devices_button');
-            const startAudioButton = document.getElementById('start_audio_button');
-            const stopAudioButton = document.getElementById('stop_audio_button');
             const audioClassificationResult = document.getElementById('audio_classification_result');
 
             let selectedDevice = "dsoundcard"; // Fixed device for AM62dx
@@ -164,12 +162,8 @@ var init = function() {
             };
 
             console.log("Fetch button:", fetchDevicesButton ? "OK" : "MISSING");
-            console.log("Start button:", startAudioButton ? "OK" : "MISSING");
 
-            // Initialize with fixed device - no device selection needed
-            if (startAudioButton) {
-                startAudioButton.disabled = false;
-            }
+            // Initialize with fixed device - no audio buttons needed
             if (audioClassificationResult) {
                 audioClassificationResult.textContent = "Ready: dsoundcard (AM62dx Audio)";
                 audioClassificationResult.classList.remove('waiting');
@@ -720,143 +714,76 @@ var init = function() {
                 });
             }
 
-            // Global variable for the pulse interval
-            let pulseInterval = null;
+            // ===== MEETING CONTROLS - INDEPENDENT OF AUDIO BUTTONS =====
+            console.log("=== Meeting Controls Init ===");
 
-            // Stop button handler
-            if (stopAudioButton) {
-                stopAudioButton.addEventListener('click', function() {
-                    console.log(">>> STOP BUTTON CLICKED <<<");
+            // Meeting Controls - Enhanced functionality
+            const startMeetingButton = document.getElementById('start_meeting_button');
+            const stopMeetingButton = document.getElementById('stop_meeting_button');
+            const meetingStatus = document.getElementById('meeting_status');
 
-                    audioClassificationResult.textContent = "Stopping...";
-                    audioClassificationResult.classList.add('waiting');
-                    stopAudioButton.disabled = true;
+            // Meeting state variables
+            let meetingActive = false;
+            let meetingStartTime = null;
+            let meetingAnalytics = {
+                confidenceScores: [],
+                rmsLevels: [],
+                responseTime: [],
+                speechActivity: 0,
+                classDistribution: {}
+            };
 
-                    // Stop session timer
-                    if (sessionTimer) {
-                        clearInterval(sessionTimer);
-                        sessionTimer = null;
+            // Update meeting controls - dsoundcard is always available
+            function updateMeetingControls() {
+                if (!meetingActive) {
+                    startMeetingButton.disabled = false;
+                } else {
+                    startMeetingButton.disabled = true;
+                }
+            }
+
+            // Initialize meeting controls with fixed device
+            updateMeetingControls();
+
+            // Start Meeting Function
+            if (startMeetingButton) {
+                startMeetingButton.addEventListener('click', function() {
+                    console.log(">>> START MEETING BUTTON CLICKED <<<");
+                    if (!selectedDevice) {
+                        alert("Please select an audio device first!");
+                        return;
                     }
 
-                    // Clear diagnostics
-                    if (diagnosticInterval) {
-                        clearInterval(diagnosticInterval);
-                        diagnosticInterval = null;
-                    }
+                    meetingActive = true;
+                    meetingStartTime = Date.now();
 
-                    // Update status indicator
-                    const statusIndicator = document.getElementById('status_indicator');
-                    const statusText = document.getElementById('status_text');
-                    if (statusIndicator) {
-                        statusIndicator.classList.remove('active');
-                        statusIndicator.classList.add('inactive');
-                    }
-                    if (statusText) {
-                        statusText.textContent = 'Stopping...';
-                    }
+                    // Reset meeting analytics
+                    meetingAnalytics = {
+                        confidenceScores: [],
+                        rmsLevels: [],
+                        responseTime: [],
+                        speechActivity: 0,
+                        classDistribution: {}
+                    };
 
-                    $.ajax({
-                        url: '/stop-audio-classification',
-                        type: 'GET',
-                        success: function(response) {
-                            console.log("[Audio] Stop SUCCESS:", response);
-                            audioClassificationResult.textContent = "Classification stopped";
-                            audioClassificationResult.classList.add('waiting');
-                            startAudioButton.disabled = false;
-                            stopAudioButton.disabled = true;
+                    // Update UI
+                    meetingStatus.textContent = "Meeting Active";
+                    meetingStatus.classList.remove('inactive');
+                    meetingStatus.classList.add('active');
 
-                            // Make sure to set the flag to stop classification
-                            isClassifying = false;
+                    startMeetingButton.disabled = true;
+                    stopMeetingButton.disabled = false;
 
-                            // Update status
-                            if (statusText) {
-                                statusText.textContent = 'Inactive';
-                            }
+                    // Audio classification would be started here if needed
+                    // For now, meeting controls work independently
 
-                            // Send status update via WebSocket
-                            if (wsAudio && wsAudio.readyState === WebSocket.OPEN) {
-                                wsAudio.send(JSON.stringify({type: "client_status", status: "stopped"}));
-                            }
-                        },
-                        error: function(xhr, status, error) {
-                            console.error("[Audio] Stop ERROR:", error);
-                            audioClassificationResult.textContent = "Error stopping";
-                            startAudioButton.disabled = false;
-                            stopAudioButton.disabled = true;
-                            isClassifying = false;
-                        }
-                    });
+                    // Start analytics collection
+                    startAnalyticsCollection();
                 });
+            }
 
-                // Meeting Controls - Enhanced functionality
-                const startMeetingButton = document.getElementById('start_meeting_button');
-                const stopMeetingButton = document.getElementById('stop_meeting_button');
-                const meetingStatus = document.getElementById('meeting_status');
-
-                // Meeting state variables
-                let meetingActive = false;
-                let meetingStartTime = null;
-                let meetingAnalytics = {
-                    confidenceScores: [],
-                    rmsLevels: [],
-                    responseTime: [],
-                    speechActivity: 0,
-                    classDistribution: {}
-                };
-
-                // Update meeting controls - dsoundcard is always available
-                function updateMeetingControls() {
-                    if (!meetingActive) {
-                        startMeetingButton.disabled = false;
-                    } else {
-                        startMeetingButton.disabled = true;
-                    }
-                }
-
-                // Initialize meeting controls with fixed device
-                updateMeetingControls();
-
-                // Start Meeting Function
-                if (startMeetingButton) {
-                    startMeetingButton.addEventListener('click', function() {
-                        console.log(">>> START MEETING BUTTON CLICKED <<<");
-                        if (!selectedDevice) {
-                            alert("Please select an audio device first!");
-                            return;
-                        }
-
-                        meetingActive = true;
-                        meetingStartTime = Date.now();
-
-                        // Reset meeting analytics
-                        meetingAnalytics = {
-                            confidenceScores: [],
-                            rmsLevels: [],
-                            responseTime: [],
-                            speechActivity: 0,
-                            classDistribution: {}
-                        };
-
-                        // Update UI
-                        meetingStatus.textContent = "Meeting Active";
-                        meetingStatus.classList.remove('inactive');
-                        meetingStatus.classList.add('active');
-
-                        startMeetingButton.disabled = true;
-                        stopMeetingButton.disabled = false;
-
-                        // Automatically start audio classification
-                        if (startAudioButton && !isClassifying) {
-                            startAudioButton.click();
-                        }
-
-                        // Start analytics collection
-                        startAnalyticsCollection();
-                    });
-                }
-
-                // Stop Meeting Function
-                if (stopMeetingButton) {
+            // Stop Meeting Function
+            if (stopMeetingButton) {
                     stopMeetingButton.addEventListener('click', function() {
                         console.log(">>> STOP MEETING BUTTON CLICKED <<<");
 
@@ -870,10 +797,9 @@ var init = function() {
                         startMeetingButton.disabled = false;
                         stopMeetingButton.disabled = true;
 
-                        // Stop audio classification if running
-                        if (stopAudioButton && isClassifying) {
-                            stopAudioButton.click();
-                        }
+                        // Audio classification would be stopped here if needed
+                        // For now, meeting controls work independently
+                        isClassifying = false;
 
                         // Stop analytics collection
                         stopAnalyticsCollection();
@@ -1156,9 +1082,7 @@ var init = function() {
                     document.getElementById('meeting_summary_overlay').style.display = 'none';
                 };
 
-                // Device selection disabled - dsoundcard is fixed
-                // Meeting controls already initialized above
-            }
+            // Meeting controls initialized above - no device selection needed
 
             function updateCpuLoad() {
                 $.get("/cpu-load", function(data) {
