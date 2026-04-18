@@ -153,8 +153,8 @@ var init = function() {
             const stopAudioButton = document.getElementById('stop_audio_button');
             const audioClassificationResult = document.getElementById('audio_classification_result');
 
-            let selectedDevice = null;
-            let audioDevices = [];
+            let selectedDevice = "dsoundcard"; // Fixed device for AM62dx
+            let audioDevices = ["dsoundcard"];
             let classificationStats = {
                 total: 0,
                 uniqueClasses: new Set(),
@@ -166,51 +166,17 @@ var init = function() {
             console.log("Fetch button:", fetchDevicesButton ? "OK" : "MISSING");
             console.log("Start button:", startAudioButton ? "OK" : "MISSING");
 
-            // Event listeners using getElementById instead of templateObj
-            if (fetchDevicesButton) {
-                fetchDevicesButton.addEventListener('click', function() {
-                    console.log(">>> FETCH DEVICES BUTTON CLICKED <<<");
-
-                    // Check if classification is running
-                    if (isClassifying) {
-                        if (confirm("Audio classification is currently running. Stop it and refresh devices?")) {
-                            // Stop classification first
-                            $.ajax({
-                                url: '/stop-audio-classification',
-                                type: 'GET',
-                                complete: function() {
-                                    isClassifying = false;
-                                    stopAudioButton.disabled = true;
-
-                                    // Stop session timer
-                                    if (sessionTimer) {
-                                        clearInterval(sessionTimer);
-                                        sessionTimer = null;
-                                    }
-
-                                    // Update status
-                                    const statusIndicator = document.getElementById('status_indicator');
-                                    const statusText = document.getElementById('status_text');
-                                    if (statusIndicator) {
-                                        statusIndicator.classList.remove('active');
-                                        statusIndicator.classList.add('inactive');
-                                    }
-                                    if (statusText) {
-                                        statusText.textContent = 'Inactive';
-                                    }
-
-                                    // Now fetch devices
-                                    fetchAudioDevices();
-                                }
-                            });
-                        }
-                        // If user cancels, don't do anything
-                    } else {
-                        // No classification running, just fetch devices
-                        fetchAudioDevices();
-                    }
-                });
+            // Initialize with fixed device - no device selection needed
+            if (startAudioButton) {
+                startAudioButton.disabled = false;
             }
+            if (audioClassificationResult) {
+                audioClassificationResult.textContent = "Ready: dsoundcard (AM62dx Audio)";
+                audioClassificationResult.classList.remove('waiting');
+            }
+
+            // Device selection disabled - using fixed dsoundcard
+            // No event listener needed for fetchDevicesButton
 
             function fetchAudioDevices() {
                 console.log("fetchAudioDevices() called");
@@ -838,14 +804,17 @@ var init = function() {
                     classDistribution: {}
                 };
 
-                // Update meeting controls based on device selection
+                // Update meeting controls - dsoundcard is always available
                 function updateMeetingControls() {
-                    if (selectedDevice && !meetingActive) {
+                    if (!meetingActive) {
                         startMeetingButton.disabled = false;
                     } else {
                         startMeetingButton.disabled = true;
                     }
                 }
+
+                // Initialize meeting controls with fixed device
+                updateMeetingControls();
 
                 // Start Meeting Function
                 if (startMeetingButton) {
@@ -1187,12 +1156,8 @@ var init = function() {
                     document.getElementById('meeting_summary_overlay').style.display = 'none';
                 };
 
-                // Update meeting controls when device is selected
-                const originalSelectDevice = window.selectDevice;
-                window.selectDevice = function(deviceName) {
-                    originalSelectDevice(deviceName);
-                    updateMeetingControls();
-                };
+                // Device selection disabled - dsoundcard is fixed
+                // Meeting controls already initialized above
             }
 
             function updateCpuLoad() {

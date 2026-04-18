@@ -2743,22 +2743,24 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         <div class="audio-info-section">
             <h3>Audio Input Configuration</h3>
 
-            <div class="control-section">
-                <button id="fetch_devices_button" class="control-button primary">
-                    Refresh Devices
-                </button>
+            <div class="control-section" style="display: none;">
+                <!-- Device selection disabled - using fixed dsoundcard -->
             </div>
 
             <div id="device_list_container" class="device-grid">
-                <div style="grid-column: 1 / -1; text-align: center; color: #888; padding: 20px;">
-                    Click "Refresh Devices" to load available audio input devices
+                <div class="device-card selected" data-device="dsoundcard">
+                    <div class="device-info">
+                        <div class="device-name">AM62dx Audio Input (Fixed)</div>
+                        <div class="device-id">dsoundcard - GStreamer Pipeline</div>
+                    </div>
+                    <div class="device-status selected">Ready</div>
                 </div>
             </div>
 
             <!-- Meeting Controls -->
             <div class="meeting-controls">
                 <h3 style="margin-top: 0; color: #148C9C;">Meeting Control Center</h3>
-                <button id="start_meeting_button" class="meeting-button start" disabled>
+                <button id="start_meeting_button" class="meeting-button start">
                     🎙️ Start Meeting
                 </button>
                 <button id="stop_meeting_button" class="meeting-button stop" disabled>
