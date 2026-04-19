@@ -528,6 +528,9 @@ var init = function() {
                                 // Update statistics
                                 updateStats(result.class);
 
+                                // Immediate visual feedback for quality/level changes
+                                immediateClassificationResponse(result.class);
+
                                 // Add notification for user if needed
                                 if (document.hidden) {
                                     console.log("[Audio WebSocket] Page hidden, classification continuing in background");
@@ -805,7 +808,7 @@ var init = function() {
                         if (meetingActive) {
                             updateRealTimeAnalytics();
                         }
-                    }, 2000); // Update every 2 seconds
+                    }, 250); // Update every 0.25 seconds for maximum responsiveness
                 }
 
                 function stopAnalyticsCollection() {
@@ -835,12 +838,12 @@ var init = function() {
 
                 // Calculate REAL confidence from classification consistency
                 function calculateRealConfidence() {
-                    if (classificationStats.history.length < 3) {
+                    if (classificationStats.history.length < 2) {
                         return (75 + Math.random() * 15).toFixed(1); // 75-90% for initial period
                     }
 
-                    // Get last 5 classifications
-                    const recent = classificationStats.history.slice(-5);
+                    // Get last 3 classifications for faster response (reduced from 5)
+                    const recent = classificationStats.history.slice(-3);
 
                     // Calculate consistency (same class appearing frequently = higher confidence)
                     const classCount = {};
@@ -879,23 +882,30 @@ var init = function() {
                         return (35 + Math.random() * 10).toFixed(1); // 35-45 dB initial
                     }
 
-                    // Get recent classifications
-                    const recent = classificationStats.history.slice(-10);
+                    // Get recent classifications (reduced window for faster response)
+                    const recent = classificationStats.history.slice(-5);
 
-                    // Analyze audio activity based on classification types
+                    // Analyze audio activity based on classification types (more responsive scoring)
                     let activityScore = 0;
+                    let silenceWeight = 0;
                     recent.forEach(item => {
                         const cls = item.class.toLowerCase();
                         if (cls.includes('speech') || cls.includes('conversation')) {
-                            activityScore += 3; // High activity
-                        } else if (cls.includes('music') || cls.includes('laughter')) {
-                            activityScore += 2; // Medium activity
+                            activityScore += 4; // Higher activity for faster response
+                        } else if (cls.includes('music') || cls.includes('laughter') || cls.includes('singing')) {
+                            activityScore += 3; // Good activity
                         } else if (cls.includes('silence')) {
                             activityScore += 0; // No activity
+                            silenceWeight += 1;
                         } else {
-                            activityScore += 1; // Low activity
+                            activityScore += 2; // Medium activity for other sounds
                         }
                     });
+
+                    // Apply silence penalty for more accurate RMS
+                    if (silenceWeight > recent.length / 2) {
+                        activityScore *= 0.3; // Reduce activity if mostly silence
+                    }
 
                     // Convert activity to RMS estimate (realistic range: 25-55 dB)
                     const avgActivity = activityScore / recent.length;
@@ -952,6 +962,39 @@ var init = function() {
 
                     // Update Live Audio Quality and Level in Classification Block
                     updateLiveAudioMetrics(confidence, rmsLevel);
+                }
+
+                function immediateClassificationResponse(newClass) {
+                    // Provide immediate visual feedback when classification changes
+                    const liveQualityElem = document.getElementById('live_audio_quality');
+                    const qualityIcon = document.querySelector('.quality-icon');
+                    const levelBarsContainer = document.getElementById('audio_level_bars');
+
+                    if (newClass.toLowerCase().includes('silence')) {
+                        // Immediate silence response
+                        if (liveQualityElem) {
+                            liveQualityElem.textContent = 'No audio detected';
+                            liveQualityElem.style.color = '#666'; // Gray for no audio
+                        }
+                        if (qualityIcon) {
+                            qualityIcon.textContent = '⚪'; // White circle for silence
+                        }
+                        if (levelBarsContainer) {
+                            // Immediately clear all bars for silence
+                            const bars = levelBarsContainer.querySelectorAll('.bar');
+                            bars.forEach(bar => bar.classList.remove('active'));
+                        }
+                    } else {
+                        // Quick preliminary update for non-silence audio
+                        if (liveQualityElem) {
+                            liveQualityElem.textContent = 'Analyzing...';
+                            liveQualityElem.style.color = '#148C9C'; // Blue for analyzing
+                        }
+                        if (qualityIcon) {
+                            qualityIcon.textContent = '🔵'; // Blue circle for analyzing
+                        }
+                        // Level bars will be updated by the analytics interval with real values
+                    }
                 }
 
                 function updateLiveAudioMetrics(confidence, rmsLevel) {
@@ -1335,12 +1378,20 @@ var init = function() {
                 function formatDuration(seconds) {
                     const hours = Math.floor(seconds / 3600);
                     const minutes = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
 
                     if (hours > 0) {
-                        return `${hours} hr ${minutes} min`;
+                        // Show hours and minutes (and seconds if significant)
+                        if (minutes > 0) {
+                            return `${hours} hr ${minutes} min`;
+                        } else {
+                            return `${hours} hr`;
+                        }
                     } else if (minutes > 0) {
-                        return `${minutes} min`;
+                        // Show minutes and seconds
+                        return `${minutes} min ${secs} sec`;
                     } else {
+                        // Show only seconds
                         return `${seconds} sec`;
                     }
                 }
