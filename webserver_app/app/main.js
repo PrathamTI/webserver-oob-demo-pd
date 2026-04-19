@@ -854,16 +854,23 @@ var init = function() {
                     // Base confidence on classification consistency
                     let baseConfidence = 60 + (consistency * 35); // 60-95%
 
-                    // Boost confidence for clear audio classes
+                    // Adjust confidence based on audio content type
                     const currentClass = recent[recent.length - 1]?.class || '';
-                    const clearClasses = ['Speech', 'Conversation', 'Silence', 'Music'];
-                    if (clearClasses.some(cls => currentClass.includes(cls))) {
-                        baseConfidence = Math.min(95, baseConfidence + 5);
+
+                    // Silence should have lower confidence since there's no audio to analyze
+                    if (currentClass.toLowerCase().includes('silence')) {
+                        baseConfidence = Math.max(30, baseConfidence - 20); // Reduce confidence for silence
+                    } else {
+                        // Boost confidence for clear audio classes with actual content
+                        const clearClasses = ['Speech', 'Conversation', 'Music'];
+                        if (clearClasses.some(cls => currentClass.includes(cls))) {
+                            baseConfidence = Math.min(95, baseConfidence + 5);
+                        }
                     }
 
                     // Add small realistic variation
                     const variation = (Math.random() - 0.5) * 4; // ±2%
-                    return Math.max(65, Math.min(95, baseConfidence + variation)).toFixed(1);
+                    return Math.max(30, Math.min(95, baseConfidence + variation)).toFixed(1);
                 }
 
                 // Calculate REAL RMS estimation from audio activity
@@ -951,9 +958,19 @@ var init = function() {
                     // Update Live Audio Quality element
                     const liveQualityElem = document.getElementById('live_audio_quality');
                     if (liveQualityElem) {
-                        const qualityText = confidence >= 75 ? 'Excellent' :
-                                           confidence >= 60 ? 'Good' :
-                                           confidence >= 40 ? 'Fair' : 'Poor';
+                        // Check if current classification is silence
+                        const currentClass = classificationStats.history.length > 0 ?
+                            classificationStats.history[classificationStats.history.length - 1]?.class || '' : '';
+
+                        let qualityText;
+                        if (currentClass.toLowerCase().includes('silence') || rmsLevel < 30) {
+                            qualityText = 'No audio detected';
+                        } else {
+                            // Only show quality ratings for actual audio content
+                            qualityText = confidence >= 75 && rmsLevel >= 35 ? 'Excellent' :
+                                         confidence >= 60 && rmsLevel >= 30 ? 'Good' :
+                                         confidence >= 40 ? 'Fair' : 'Poor';
+                        }
 
                         liveQualityElem.textContent = qualityText;
                         liveQualityElem.className = 'quality-value';
@@ -961,15 +978,21 @@ var init = function() {
                         // Update quality icon and color based on quality
                         const qualityIcon = document.querySelector('.quality-icon');
                         if (qualityIcon) {
-                            qualityIcon.textContent = confidence >= 75 ? '💚' :
-                                                     confidence >= 60 ? '💛' :
-                                                     confidence >= 40 ? '🧡' : '❤️';
+                            if (currentClass.toLowerCase().includes('silence') || rmsLevel < 30) {
+                                qualityIcon.textContent = '⚪'; // White circle for no audio
+                            } else {
+                                qualityIcon.textContent = confidence >= 75 && rmsLevel >= 35 ? '💚' :
+                                                         confidence >= 60 && rmsLevel >= 30 ? '💛' :
+                                                         confidence >= 40 ? '🧡' : '❤️';
+                            }
                         }
 
                         // Update quality value color to match dot colors
-                        if (confidence >= 75) {
+                        if (currentClass.toLowerCase().includes('silence') || rmsLevel < 30) {
+                            liveQualityElem.style.color = '#666'; // Gray for no audio
+                        } else if (confidence >= 75 && rmsLevel >= 35) {
                             liveQualityElem.style.color = '#22c55e'; // Green to match 💚
-                        } else if (confidence >= 60) {
+                        } else if (confidence >= 60 && rmsLevel >= 30) {
                             liveQualityElem.style.color = '#eab308'; // Yellow to match 💛
                         } else if (confidence >= 40) {
                             liveQualityElem.style.color = '#f97316'; // Orange to match 🧡
