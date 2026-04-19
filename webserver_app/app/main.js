@@ -508,6 +508,15 @@ var init = function() {
                                 // Classification result - LIVE UPDATES!
                                 console.log("[Audio WebSocket] Classification result received:", result.class);
 
+                                // Filter out unwanted classifications
+                                const unwantedClasses = ['fart', 'burp', 'eructation', 'snort', 'oink', 'moan', 'snoring', 'wheeze', 'gasp', 'pant', 'grunt', 'stomach rumble'];
+                                const classLower = result.class.toLowerCase();
+
+                                if (unwantedClasses.some(unwanted => classLower.includes(unwanted))) {
+                                    console.log("[Audio WebSocket] Filtered out unwanted classification:", result.class);
+                                    return; // Skip processing this classification
+                                }
+
                                 // Update main display
                                 if (audioClassificationResult) {
                                     audioClassificationResult.textContent = result.class;

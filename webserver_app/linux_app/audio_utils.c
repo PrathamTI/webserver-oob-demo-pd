@@ -186,13 +186,10 @@ void* gst_launch_thread(void *arg) {
         return NULL;
     }
 
-    // Use the default device if none selected
-    const char *device = g_selected_device ? g_selected_device : "plughw:0,0";
-
     char gst_command[2048]; // Increased buffer size for gst_command
-    
+
     snprintf(gst_command, sizeof(gst_command),
-             "gst-launch-1.0 alsasrc device=%s ! "
+             "gst-launch-1.0 alsasrc device=dsoundcard ! "
              "audioconvert ! audioresample ! audio/x-raw,format=S16LE,channels=1,rate=16000,layout=interleaved ! "
              "tensor_converter frames-per-tensor=3900 ! "
              "tensor_aggregator frames-in=3900 frames-out=15600 frames-flush=3900 frames-dim=1 ! "
@@ -202,21 +199,9 @@ void* gst_launch_thread(void *arg) {
              "tensor_filter framework=tensorflow2-lite model=/usr/share/oob-demo-assets/models/yamnet_audio_classification.tflite custom=Delegate:XNNPACK,NumThreads:2 ! "
              "tensor_decoder mode=image_labeling option1=/usr/share/oob-demo-assets/labels/yamnet_label_list.txt ! "
              "filesink buffer-mode=2 location=%s 2>/dev/null",
-             device, fifo_path);
+             fifo_path);
 
-    fprintf(stderr, "Starting GStreamer with device: %s\n", device);
-
-    // Execute Dante commands before starting GStreamer pipeline
-    fprintf(stderr, "Stopping Dante services...\n");
-    system("cd /opt/dep/dante_package && ./dep.sh stop");
-
-    fprintf(stderr, "Waiting 1 second...\n");
-    sleep(1);
-
-    fprintf(stderr, "Starting Dante services...\n");
-    system("cd /opt/dep/dante_package && ./dep.sh start");
-
-    fprintf(stderr, "Dante services restarted, now starting GStreamer pipeline...\n");
+    fprintf(stderr, "Starting GStreamer with fixed dsoundcard device\n");
 
     // Execute the GStreamer pipeline
     FILE *pipe = popen(gst_command, "r");
@@ -329,43 +314,11 @@ int main(int argc, char *argv[]) {
         }
 
         // Handle device selection
+        // Device parameter is ignored - dsoundcard is hardcoded in pipeline
         if (argc > 2) {
-            // Map display name to ALSA device
-            g_selected_device = NULL;
-            char *requested_device = argv[2];
-
-            // First check if it's directly an ALSA device format (plughw:X,Y)
-            if (strncmp(requested_device, "plughw:", 7) == 0) {
-                g_selected_device = strdup(requested_device);
-            } else {
-                // Otherwise, try to match by display name
-                for (int i = 0; i < device_count; i++) {
-                    if (strcmp(audio_devices[i].display_name, requested_device) == 0) {
-                        g_selected_device = strdup(audio_devices[i].alsa_device);
-                        fprintf(stderr, "Mapped device '%s' to ALSA device: %s\n",
-                               requested_device, g_selected_device);
-                        break;
-                    }
-                }
-
-                // If no match found, default to the first device if available
-                if (!g_selected_device && device_count > 0) {
-                    g_selected_device = strdup(audio_devices[0].alsa_device);
-                    fprintf(stderr, "No exact match for '%s', using default device: %s\n",
-                           requested_device, g_selected_device);
-                }
-            }
-
-            // If still no device, use a default
-            if (!g_selected_device) {
-                g_selected_device = strdup("plughw:0,0");
-                fprintf(stderr, "Using fallback default device: %s\n", g_selected_device);
-            }
-        } else if (device_count > 0) {
-            // No device specified, use the first available one
-            g_selected_device = strdup(audio_devices[0].alsa_device);
-            fprintf(stderr, "No device specified, using first device: %s\n", g_selected_device);
+            fprintf(stderr, "Device parameter '%s' ignored - using fixed dsoundcard\n", argv[2]);
         }
+        fprintf(stderr, "Using hardcoded dsoundcard device\n");
 
         // Setup signal handlers for graceful shutdown
         signal(SIGTERM, signal_handler);
@@ -405,10 +358,6 @@ int main(int argc, char *argv[]) {
 
         // Cleanup
         unlink(pid_file);
-        if (g_selected_device) {
-            free(g_selected_device);
-            g_selected_device = NULL;
-        }
     } else if (argc > 1 && strcmp(argv[1], "stop_gst") == 0) {
         // Read PID from file and send SIGTERM
         FILE *pf = fopen(pid_file, "r");
