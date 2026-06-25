@@ -8,16 +8,7 @@
       "image": "images/sk-am62d-angled.png"
     }
   ],
-  "soc": "AM62Dx quad Cortex-A53 @ 1.4GHz + dual DSS",
-  "demos": ["cpu-monitor", "audio-classification"],
-  "demoConfig": {
-    "audio-classification": {
-      "model":    "/usr/share/oob-demo-assets/models/yamnet_audio_classification.tflite",
-      "labels":   "/usr/share/oob-demo-assets/labels/yamnet_label_list.txt",
-      "delegate": "XNNPACK",
-      "threads":  4
-    }
-  },
+  "demos": [],
   "docs": {
     "subtitle": "Everything you need to develop with AM62D Sitara processors",
     "cards": [
