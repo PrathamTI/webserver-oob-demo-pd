@@ -8,7 +8,14 @@
       "image": "images/sk-am62d-angled.png"
     }
   ],
-  "demos": [],
+  "demos": ["tvm-inference"],
+  "demoConfig": {
+    "tvm-inference": {
+      "artifactsPath": "/root/artifacts_mobilenet_v2_tv-onnx/",
+      "modelName": "MobileNet v2",
+      "description": "Hardware-accelerated inference using TVM+TIDL on C7x DSP"
+    }
+  },
   "docs": {
     "subtitle": "Everything you need to develop with AM62D Sitara processors",
     "cards": [
