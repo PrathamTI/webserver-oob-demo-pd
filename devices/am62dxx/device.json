@@ -8,7 +8,8 @@
       "image": "images/sk-am62d-angled.png"
     }
   ],
-  "demos": ["tvm-inference"],
+  "soc": "AM62Dx quad Cortex-A53 @ 1.4GHz + dual DSS",
+  "demos": ["cpu-monitor", "tvm-inference"],
   "demoConfig": {
     "tvm-inference": {
       "artifactsPath": "/root/artifacts_mobilenet_v2_tv-onnx/",
