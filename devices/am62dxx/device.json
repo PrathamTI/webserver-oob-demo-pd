@@ -4,11 +4,11 @@
   "boards": [
     {
       "name": "SK-AM62D",
-      "description": "Starter Kit for AM62D processors — display-optimized quad Cortex-A53 with dual DSS, designed for multi-display HMI.",
+      "description": "Starter Kit for AM62D processors — expandable audio platform with quad Cortex-A53 and C7x DSP, optimized for premium audio processing, noise reduction, and AI-powered speech enhancement.",
       "image": "images/sk-am62d-angled.png"
     }
   ],
-  "soc": "AM62Dx quad Cortex-A53 @ 1.4GHz + dual DSS",
+  "soc": "AM62Dx quad Cortex-A53 @ 1.4GHz + C7x DSP",
   "demos": ["cpu-monitor", "tvm-inference"],
   "demoConfig": {
     "tvm-inference": {
