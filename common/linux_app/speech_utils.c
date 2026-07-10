@@ -70,6 +70,70 @@ typedef struct {
 static audio_device_info audio_devices[MAX_DEVICES];
 static int device_count = 0;
 
+/*
+ * Parse one line of `arecord -l` / `aplay -l` output.
+ * Format: card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
+ * Populates audio_devices[device_count]. Returns 1 on success, 0 to skip.
+ */
+static int parse_alsa_line(const char *line)
+{
+    int card_num = -1, dev_num = -1;
+    char card_name[128] = {0};
+    char dev_short[128] = {0};
+
+    if (strncmp(line, "card", 4) != 0) return 0;
+
+    const char *dev_str = strstr(line, ", device ");
+    if (!dev_str) return 0;
+
+    sscanf(line, "card %d:", &card_num);
+    if (card_num < 0) return 0;
+
+    const char *ns = strchr(line, '[');
+    const char *ne = ns ? strchr(ns, ']') : NULL;
+    if (!ns || !ne || ne <= ns) return 0;
+    int nl = (int)(ne - ns - 1);
+    if (nl <= 0 || nl >= (int)sizeof(card_name)) return 0;
+    strncpy(card_name, ns + 1, nl);
+    card_name[nl] = '\0';
+
+    if (strstr(card_name, "HDMI")   || strstr(card_name, "hdmi")   ||
+        strstr(card_name, "cape")   ||
+        strstr(card_name, "Webcam") || strstr(card_name, "webcam") ||
+        strstr(card_name, "Camera") || strstr(card_name, "camera")) {
+        fprintf(stderr, "Skipping device: %s\n", card_name);
+        return 0;
+    }
+
+    sscanf(dev_str, ", device %d:", &dev_num);
+    if (dev_num < 0) return 0;
+
+    const char *p = strchr(dev_str, ':');
+    if (!p) return 0;
+    p++;
+    while (*p == ' ') p++;
+    while (*p && *p != ' ') p++;
+    while (*p == ' ') p++;
+    int di = 0;
+    while (*p && *p != ' ' && *p != '[' && *p != '\n' && di < 127)
+        dev_short[di++] = (char)*p++;
+    dev_short[di] = '\0';
+    if (di == 0) return 0;
+
+    char display[256];
+    snprintf(display, sizeof(display), "%s: %s", card_name, dev_short);
+
+    strncpy(audio_devices[device_count].display_name, display,
+            sizeof(audio_devices[device_count].display_name) - 1);
+    snprintf(audio_devices[device_count].alsa_device,
+             sizeof(audio_devices[device_count].alsa_device),
+             "plughw:%d,%d", card_num, dev_num);
+
+    fprintf(stderr, "Found device: %s -> %s\n",
+            display, audio_devices[device_count].alsa_device);
+    return 1;
+}
+
 static void get_arecord_devices(void)
 {
     FILE *fp;
@@ -84,41 +148,9 @@ static void get_arecord_devices(void)
         return;
     }
 
-    char name[256];
-    int card_num = -1;
-
-    while (fgets(line, sizeof(line), fp)) {
-        if (strncmp(line, "card", 4) != 0) continue;
-
-        sscanf(line, "card %d:", &card_num);
-
-        char *ns = strchr(line, '[');
-        char *ne = strchr(line, ']');
-        if (!ns || !ne || ne <= ns || device_count >= MAX_DEVICES) continue;
-
-        int nl = ne - ns - 1;
-        if (nl <= 0 || nl >= (int)sizeof(name)) continue;
-
-        strncpy(name, ns + 1, nl);
-        name[nl] = '\0';
-
-        if (strstr(name, "HDMI")   || strstr(name, "hdmi")   ||
-            strstr(name, "Webcam") || strstr(name, "webcam") ||
-            strstr(name, "Camera") || strstr(name, "camera") ||
-            strstr(name, "cape")) {
-            fprintf(stderr, "Skipping non-audio device: %s\n", name);
-            continue;
-        }
-
-        strncpy(audio_devices[device_count].display_name, name,
-                sizeof(audio_devices[device_count].display_name) - 1);
-        snprintf(audio_devices[device_count].alsa_device,
-                 sizeof(audio_devices[device_count].alsa_device),
-                 "plughw:%d,0", card_num);
-
-        fprintf(stderr, "Found capture device: %s -> %s\n",
-                name, audio_devices[device_count].alsa_device);
-        device_count++;
+    while (fgets(line, sizeof(line), fp) && device_count < MAX_DEVICES) {
+        if (parse_alsa_line(line))
+            device_count++;
     }
     pclose(fp);
 
@@ -142,8 +174,5 @@ int main(int argc, char *argv[])
 
     printf("Usage:\n");
     printf("  %s devices              - List audio recording devices\n", argv[0]);
-    printf("  %s start_gst [device]   - Start speech-to-text pipeline\n", argv[0]);
-    printf("  %s stop_gst             - Stop speech-to-text pipeline\n", argv[0]);
-    printf("  %s status               - Check if running\n", argv[0]);
     return 1;
 }

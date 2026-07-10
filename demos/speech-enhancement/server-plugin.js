@@ -18,9 +18,40 @@
 'use strict';
 
 const { exec, execSync, spawn } = require('child_process');
-const express                   = require('express');
 const fs                        = require('fs');
 const path                      = require('path');
+
+function rawBody(limitBytes) {
+    return (req, res, next) => {
+        const chunks = [];
+        let size = 0;
+        req.on('data', chunk => {
+            size += chunk.length;
+            if (size > limitBytes) { res.status(413).send('Payload too large'); req.destroy(); return; }
+            chunks.push(chunk);
+        });
+        req.on('end', () => { req.body = Buffer.concat(chunks); next(); });
+        req.on('error', () => res.status(400).send('Bad request'));
+    };
+}
+
+/*
+ * Parse `arecord -l` or `aplay -l` output into "plughw:C,D|CARD_NAME: DEV_SHORT" lines.
+ * Each card+device combination becomes its own entry (no deduplication).
+ * Line format: card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
+ */
+function parseAlsaOutput(stdout) {
+    const results = [];
+    for (const line of stdout.split('\n')) {
+        if (!line.startsWith('card')) continue;
+        const m = line.match(/card (\d+):.*?\[([^\]]+)\],\s*device (\d+):\s*\S+\s+(\S+)/);
+        if (!m) continue;
+        const [, cardNum, cardName, devNum, devShort] = m;
+        if (/webcam|camera|cape/i.test(cardName)) continue;
+        results.push(`plughw:${cardNum},${devNum}|${cardName}: ${devShort}`);
+    }
+    return results.join('\n');
+}
 
 const WS_OPEN = 1;
 
@@ -56,20 +87,35 @@ module.exports = function registerSpeechEnhancement(app, wss, device) {
 
     app.get('/speech-devices', (req, res) => {
         if (MOCK) {
-            return res.send('plughw:0,0|Mock USB Microphone\nplughw:1,0|Mock Built-in Mic');
+            return res.send('plughw:0,0|Mock Card: mock-input-0\nplughw:1,0|Mock Card: mock-input-1');
         }
-        exec('/usr/bin/audio_utils devices', (error, stdout) => {
+        exec('arecord -l 2>/dev/null', (error, stdout) => {
             if (error) {
-                console.error('[speech] audio_utils devices error:', error);
-                return res.status(500).send('Error listing audio devices');
+                console.error('[speech] arecord -l error:', error);
+                return res.status(500).send('Error listing audio input devices');
             }
-            res.send(stdout);
+            const out = parseAlsaOutput(stdout);
+            res.send(out || 'No audio input devices found');
+        });
+    });
+
+    app.get('/speech-output-devices', (req, res) => {
+        if (MOCK) {
+            return res.send('plughw:0,0|Mock Card: mock-output-0\nplughw:0,1|Mock Card: mock-output-1');
+        }
+        exec('aplay -l 2>/dev/null', (error, stdout) => {
+            if (error) {
+                console.error('[speech] aplay -l error:', error);
+                return res.status(500).send('Error listing audio output devices');
+            }
+            const out = parseAlsaOutput(stdout);
+            res.send(out || 'No audio output devices found');
         });
     });
 
     /* File upload — saves raw audio binary to /tmp for later processing */
     app.post('/upload-speech-enhancement-file',
-        express.raw({ type: '*/*', limit: '50mb' }),
+        rawBody(50 * 1024 * 1024),
         (req, res) => {
             if (MOCK) {
                 return res.json({ path: '/tmp/mock_speech.wav' });
