@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>(function(){var B=1280;function r(){var s=window.innerWidth/B;document.documentElement.style.zoom=s<1?s:'';}r();window.addEventListener('resize',r);})();</script>
     <title>Audio DSP With Analytics - TI AM62D Demo Portal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -560,6 +561,13 @@
                         <select id="audio-device-sel" style="background:#111827;border:1px solid #1e2a3a;color:#e2e8f0;font-size:13px;padding:6px 10px;border-radius:6px;width:100%;cursor:pointer;outline:none;">
                             <option value="default">Loading devices...</option>
                         </select>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;margin-bottom:4px;">
+                            <div class="sub-ttl" style="margin:0;">Output Device</div>
+                            <button onclick="loadAudioOutputDevices()" title="Refresh device list" style="background:none;border:1px solid #1e2a3a;color:#64748b;font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;">&#8635; Refresh</button>
+                        </div>
+                        <select id="audio-output-device-sel" style="background:#111827;border:1px solid #1e2a3a;color:#e2e8f0;font-size:13px;padding:6px 10px;border-radius:6px;width:100%;cursor:pointer;outline:none;">
+                            <option value="default">Loading devices...</option>
+                        </select>
                     </div>
                     <!-- Audio File panel -->
                     <div id="src-file-panel" style="display:none;">
@@ -583,30 +591,8 @@
                     </div>
                     <hr class="card-divider">
                     <div class="sub-ttl">Signal Flow</div>
-                    <div class="sig-flow">
-                        <div class="sf-node">
-                            <div class="sf-circle" style="background:radial-gradient(circle at 40% 40%,#1a3a7a,#0a1540);border:2px solid #1d4ed8;color:#60a5fa">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 5,7 7,15 10,5 12,18 15,9 17,14 20,11 22,12"/></svg>
-                            </div>
-                            <div class="sf-lbl-main" style="color:#60a5fa">Input</div>
-                            <div class="sf-lbl-sub">(ADC)</div>
-                        </div>
-                        <span class="sf-arr">&#8594;</span>
-                        <div class="sf-node">
-                            <div class="sf-rect" style="background:#0a2d1e;border:2px solid #059669;color:#34d399">
-                                <div style="font-size:11px;font-weight:700;color:#34d399">C7x DSP</div>
-                                <div style="font-size:10px;color:#6ee7b7;margin-top:2px">Processing</div>
-                            </div>
-                        </div>
-                        <span class="sf-arr">&#8594;</span>
-                        <div class="sf-node">
-                            <div class="sf-circle" style="background:radial-gradient(circle at 40% 40%,#3b1c68,#1e0d40);border:2px solid #7c3aed;color:#c084fc">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19 11,5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                            </div>
-                            <div class="sf-lbl-main" style="color:#c084fc">Output</div>
-                            <div class="sf-lbl-sub">(DAC)</div>
-                        </div>
-                    </div>
+                    <img src="images/audio-classification-flow.png" alt="Audio Classification Pipeline"
+                         style="width:100%;border-radius:8px;border:1px solid #1e2a3a;">
                     <div class="sub-ttl">Results</div>
                     <div id="audio-results" style="overflow-y:auto;background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:8px;min-height:80px;max-height:150px;font-size:12px;">
                         <div style="color:#475569;text-align:center;padding:16px 0;" id="audio-results-placeholder">Results will appear here when running</div>
@@ -650,6 +636,13 @@
                             <button onclick="loadSpeechDevices()" title="Refresh device list" style="background:none;border:1px solid #1e2a3a;color:#64748b;font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;">&#8635; Refresh</button>
                         </div>
                         <select id="speech-device-sel" style="background:#111827;border:1px solid #1e2a3a;color:#e2e8f0;font-size:13px;padding:6px 10px;border-radius:6px;width:100%;cursor:pointer;outline:none;">
+                            <option value="default">Loading devices...</option>
+                        </select>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;margin-bottom:4px;">
+                            <div class="sub-ttl" style="margin:0;">Output Device</div>
+                            <button onclick="loadSpeechOutputDevices()" title="Refresh device list" style="background:none;border:1px solid #1e2a3a;color:#64748b;font-size:11px;padding:2px 8px;border-radius:4px;cursor:pointer;">&#8635; Refresh</button>
+                        </div>
+                        <select id="speech-output-device-sel" style="background:#111827;border:1px solid #1e2a3a;color:#e2e8f0;font-size:13px;padding:6px 10px;border-radius:6px;width:100%;cursor:pointer;outline:none;">
                             <option value="default">Loading devices...</option>
                         </select>
                     </div>
@@ -813,8 +806,8 @@ document.querySelectorAll('.dsi').forEach((el, i) => {
         document.getElementById('live-tvm-section').style.display    = isTvm    ? 'flex' : 'none';
         document.getElementById('live-speech-section').style.display = isSpeech ? 'flex' : 'none';
         _setRunBtnState(isTvm);
-        if (isAudio)       { loadAudioDevices(); }
-        else if (isSpeech) { loadSpeechDevices(); }
+        if (isAudio)       { loadAudioDevices(); loadAudioOutputDevices(); }
+        else if (isSpeech) { loadSpeechDevices(); loadSpeechOutputDevices(); }
         else if (!isTvm) {
             document.getElementById('desc-body').textContent = d.desc;
             document.getElementById('feat-list').innerHTML = d.features.map(f => `<li><span class="chk">&#10003;</span> ${f}</li>`).join('');
@@ -983,7 +976,7 @@ function updateAudioRunBtn(_running) { /* button disabled — not supported yet 
 function loadSpeechDevices() {
     const sel = document.getElementById('speech-device-sel');
     if (sel) sel.innerHTML = '<option value="default">Fetching devices...</option>';
-    fetch('/audio-devices')
+    fetch('/speech-devices')
         .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
         .then(text => {
             const lines = text.trim().split('\n').filter(Boolean);
@@ -996,6 +989,44 @@ function loadSpeechDevices() {
         .catch(err => {
             if (sel) sel.innerHTML = '<option value="default">Default (unavailable)</option>';
             console.warn('[speech] loadSpeechDevices:', err.message);
+        });
+}
+
+function loadAudioOutputDevices() {
+    const sel = document.getElementById('audio-output-device-sel');
+    if (sel) sel.innerHTML = '<option value="default">Fetching devices...</option>';
+    fetch('/audio-output-devices')
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(text => {
+            const lines = text.trim().split('\n').filter(Boolean);
+            if (!lines.length) { sel.innerHTML = '<option value="default">No devices found</option>'; return; }
+            sel.innerHTML = lines.map(line => {
+                const [id, name] = line.split('|');
+                return `<option value="${id.trim()}">${(name || id).trim()}</option>`;
+            }).join('');
+        })
+        .catch(err => {
+            if (sel) sel.innerHTML = '<option value="default">Default (unavailable)</option>';
+            console.warn('[audio] loadAudioOutputDevices:', err.message);
+        });
+}
+
+function loadSpeechOutputDevices() {
+    const sel = document.getElementById('speech-output-device-sel');
+    if (sel) sel.innerHTML = '<option value="default">Fetching devices...</option>';
+    fetch('/speech-output-devices')
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(text => {
+            const lines = text.trim().split('\n').filter(Boolean);
+            if (!lines.length) { sel.innerHTML = '<option value="default">No devices found</option>'; return; }
+            sel.innerHTML = lines.map(line => {
+                const [id, name] = line.split('|');
+                return `<option value="${id.trim()}">${(name || id).trim()}</option>`;
+            }).join('');
+        })
+        .catch(err => {
+            if (sel) sel.innerHTML = '<option value="default">Default (unavailable)</option>';
+            console.warn('[speech] loadSpeechOutputDevices:', err.message);
         });
 }
 
