@@ -405,6 +405,17 @@
                     <span class="dsi-arr">›</span>
                 </div>
 
+                <div class="dsi" data-demo="3">
+                    <div class="dsi-ic" style="background:radial-gradient(circle at 40% 40%,#3a1a00,#1f0d00);border:2px solid #d97706;color:#fbbf24">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="20" x2="4" y2="4"/><line x1="8" y1="20" x2="8" y2="12"/><line x1="12" y1="20" x2="12" y2="2"/><line x1="16" y1="20" x2="16" y2="10"/><line x1="20" y1="20" x2="20" y2="6"/></svg>
+                    </div>
+                    <div class="dsi-txt">
+                        <div class="dsi-name">Audio DSP Offload</div>
+                        <div class="dsi-sub">8-ch RPMsg-DMA on C7x DSP</div>
+                    </div>
+                    <span class="dsi-arr">›</span>
+                </div>
+
             </div>
 
             <!-- COL 2: Demo Description -->
@@ -771,6 +782,84 @@
                         Start Spectrum
                     </button>
                 </div>
+
+                <!-- Audio DSP Offload live panel -->
+                <div id="live-offload-section" style="display:none;flex-direction:column;gap:10px;flex:1;">
+                    <p class="desc-text">Real-time 8-channel audio processing offloaded to C7x DSP via RPMsg-DMA. FFT bandpass filtering with input/output spectrum and live CPU/DSP load metrics.</p>
+                    <hr class="card-divider">
+                    <!-- Controls -->
+                    <div class="sub-ttl">Controls</div>
+                    <div style="display:flex;gap:6px;align-items:center;">
+                        <span style="font-size:11px;color:#94a3b8;flex-shrink:0;">FFT Filter</span>
+                        <button id="ao-filter-on"  onclick="setAoFilter(true)"  style="flex:1;padding:5px 8px;background:#1d4ed8;border:1px solid #2563eb;color:#e2e8f0;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;">ON</button>
+                        <button id="ao-filter-off" onclick="setAoFilter(false)" style="flex:1;padding:5px 8px;background:#0f172a;border:1px solid #1e2a3a;color:#64748b;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;">OFF</button>
+                        <span style="font-size:11px;color:#94a3b8;flex-shrink:0;margin-left:4px;">Mode</span>
+                        <button id="ao-mode-dsp" onclick="setAoMode('DSP')" style="flex:1;padding:5px 8px;background:#1d4ed8;border:1px solid #2563eb;color:#e2e8f0;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;">DSP</button>
+                        <button id="ao-mode-arm" onclick="setAoMode('ARM')" style="flex:1;padding:5px 8px;background:#0f172a;border:1px solid #1e2a3a;color:#64748b;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;">ARM</button>
+                    </div>
+                    <!-- Status -->
+                    <div style="display:flex;align-items:center;gap:7px;font-size:12px;">
+                        <span id="ao-status-dot" style="width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
+                        <span id="ao-status-txt" style="color:#64748b;">Not running</span>
+                    </div>
+                    <!-- Metrics -->
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                        <div style="background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:7px 10px;">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:3px;">Frame</div>
+                            <div id="ao-m-frame" style="font-size:15px;font-weight:700;color:#e2e8f0;">--</div>
+                        </div>
+                        <div style="background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:7px 10px;">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:3px;">Latency</div>
+                            <div id="ao-m-latency" style="font-size:15px;font-weight:700;color:#e2e8f0;">-- ms</div>
+                        </div>
+                        <div style="background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:7px 10px;">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:3px;">CPU Load</div>
+                            <div id="ao-m-cpu" style="font-size:15px;font-weight:700;color:#e2e8f0;">--%</div>
+                        </div>
+                        <div style="background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:7px 10px;">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:3px;">DSP Load</div>
+                            <div id="ao-m-dsp" style="font-size:15px;font-weight:700;color:#fbbf24;">--%</div>
+                        </div>
+                    </div>
+                    <hr class="card-divider">
+                    <div class="sub-ttl sf-toggle" onclick="toggleSigFlow(this)">Signal Flow <svg class="sf-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg></div>
+                    <div class="sf-body">
+                        <img src="images/audio-offload-flow.png" alt="Audio Offload Pipeline"
+                             style="width:100%;border-radius:8px;border:1px solid #1e2a3a;" onerror="this.style.display='none'">
+                    </div>
+                    <!-- Frequency Spectrum Charts -->
+                    <div class="sub-ttl">Audio Spectrum</div>
+                    <div style="display:flex;flex-direction:column;gap:5px;">
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-size:11px;color:#34d399;">Input Audio Spectrum</div>
+                            <canvas id="ao-spec-in"  width="440" height="130" style="border:1px solid #1e2a3a;display:block;width:100%;"></canvas>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-size:11px;color:#60a5fa;">Output Audio Spectrum</div>
+                            <canvas id="ao-spec-out" width="440" height="130" style="border:1px solid #1e2a3a;display:block;width:100%;"></canvas>
+                        </div>
+                    </div>
+                    <!-- Metrics Time-Series Charts -->
+                    <div class="sub-ttl">Trends</div>
+                    <div style="display:flex;flex-direction:column;gap:5px;">
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-size:11px;color:#64748b;">Average Amplitude</div>
+                            <canvas id="ao-ts-amp"  width="440" height="64" style="border:1px solid #1e2a3a;display:block;width:100%;"></canvas>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-size:11px;color:#64748b;">Frame Latency (ms)</div>
+                            <canvas id="ao-ts-lat"  width="440" height="64" style="border:1px solid #1e2a3a;display:block;width:100%;"></canvas>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:2px;">
+                            <div style="font-size:11px;color:#64748b;">System Load</div>
+                            <canvas id="ao-ts-load" width="440" height="64" style="border:1px solid #1e2a3a;display:block;width:100%;"></canvas>
+                        </div>
+                    </div>
+                    <button id="ao-run-btn" class="btn-run-this" onclick="toggleAoDemo()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+                        Run Demo
+                    </button>
+                </div>
             </div>
 
         </div>
@@ -822,12 +911,19 @@ const DEMOS = [
         features: ["Noise reduction on C7x DSP","TIDL-accelerated speech enhancement","Low latency real-time processing","Background noise suppression","Improved speech intelligibility"],
         tags: ["Noise Reduction","TIDL","C7x DSP"],
         preset: "vocal"
+    },
+    {
+        desc: "Real-time 8-channel audio processing offloaded to C7x DSP via RPMsg-DMA. FFT bandpass filtering with input/output spectrum visualization and live CPU/DSP performance metrics.",
+        features: ["8-channel audio via RPMsg-DMA","FFT bandpass filtering on C7x DSP","Real-time input/output spectrogram","Live CPU and DSP load metrics","ARM vs DSP mode comparison"],
+        tags: ["Audio DSP","RPMsg-DMA","C7x DSP"],
+        preset: "flat"
     }
 ];
 
 const TVM_DEMO_IDX    = 0;
 const AUDIO_CLASS_IDX = 1;
 const SPEECH_IDX      = 2;
+const OFFLOAD_IDX     = 3;
 let audioRunning  = false;
 let audioWs       = null;
 let _audioSource  = 'live';
@@ -843,26 +939,38 @@ document.querySelectorAll('.dsi').forEach((el, i) => {
         document.querySelectorAll('.dsi').forEach(d => d.classList.remove('active'));
         el.classList.add('active');
         const d = DEMOS[i];
-        const isTvm    = (i === TVM_DEMO_IDX);
-        const isAudio  = (i === AUDIO_CLASS_IDX);
-        const isSpeech = (i === SPEECH_IDX);
-        const isLive   = isAudio || isTvm || isSpeech;
-        document.getElementById('static-demo-section').style.display = isLive ? 'none' : '';
-        document.getElementById('live-audio-section').style.display  = isAudio  ? 'flex' : 'none';
-        document.getElementById('live-tvm-section').style.display    = isTvm    ? 'flex' : 'none';
-        document.getElementById('live-speech-section').style.display = isSpeech ? 'flex' : 'none';
-        _setRunBtnState(isTvm);
-        if (isAudio)       { loadAudioDevices(); loadAudioOutputDevices(); }
-        else if (isSpeech) { loadSpeechDevices(); loadSpeechOutputDevices(); }
-        else if (!isTvm) {
+        const isTvm     = (i === TVM_DEMO_IDX);
+        const isAudio   = (i === AUDIO_CLASS_IDX);
+        const isSpeech  = (i === SPEECH_IDX);
+        const isOffload = (i === OFFLOAD_IDX);
+        const isLive    = isAudio || isTvm || isSpeech || isOffload;
+        document.getElementById('static-demo-section').style.display  = isLive ? 'none' : '';
+        document.getElementById('live-audio-section').style.display   = isAudio   ? 'flex' : 'none';
+        document.getElementById('live-tvm-section').style.display     = isTvm     ? 'flex' : 'none';
+        document.getElementById('live-speech-section').style.display  = isSpeech  ? 'flex' : 'none';
+        document.getElementById('live-offload-section').style.display = isOffload ? 'flex' : 'none';
+        _setRunBtnState(isTvm || isOffload);
+        if (isAudio)        { loadAudioDevices(); loadAudioOutputDevices(); }
+        else if (isSpeech)  { loadSpeechDevices(); loadSpeechOutputDevices(); }
+        else if (!isTvm && !isOffload) {
             document.getElementById('desc-body').textContent = d.desc;
             document.getElementById('feat-list').innerHTML = d.features.map(f => `<li><span class="chk">&#10003;</span> ${f}</li>`).join('');
             document.getElementById('tags-row').innerHTML = d.tags.map(t => `<span class="tag">${t}</span>`).join('');
         }
-        if (!isAudio  && audioRunning)  stopAudioClassification();
-        if (!isSpeech && speechRunning) stopSpeechEnhancement();
+        if (!isAudio   && audioRunning)  stopAudioClassification();
+        if (!isSpeech  && speechRunning) stopSpeechEnhancement();
+        if (!isOffload && _aoRunning)    stopAoDemo();
     });
 });
+
+/* ── URL PARAM: ?demo=N pre-selects a demo on load ── */
+(function() {
+    const idx = parseInt(new URLSearchParams(location.search).get('demo'), 10);
+    if (!isNaN(idx) && idx >= 0) {
+        const cards = document.querySelectorAll('.dsi');
+        if (cards[idx]) setTimeout(() => cards[idx].click(), 0);
+    }
+})();
 
 /* ── FULLSCREEN ── */
 let _fsBtn = null;
@@ -896,7 +1004,7 @@ function toggleSigFlow(hdr) {
 function triggerRun(btn) {
     const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
     if (activeIdx === TVM_DEMO_IDX) { toggleTvmDemo(); return; }
-    /* Audio Classification and Speech Enhancement not yet supported — do nothing */
+    if (activeIdx === OFFLOAD_IDX)  { toggleAoDemo();  return; }
 }
 
 function _setRunBtnState(isTvm) {
@@ -1640,6 +1748,338 @@ function updateTvmDemoBtn(running) {
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Run TVM Inference';
         btn.style.background = '';
     }
+}
+
+/* ── AUDIO DSP OFFLOAD BACKEND ── */
+let _aoRunning = false;
+let _aoWs      = null;
+
+function setAoStatus(msg, color, pulse) {
+    const txt = document.getElementById('ao-status-txt');
+    const dot = document.getElementById('ao-status-dot');
+    if (txt) { txt.textContent = msg; txt.style.color = color; }
+    if (dot) { dot.style.background = color; dot.style.animation = pulse ? 'pulse 2s infinite' : 'none'; }
+}
+
+function updateAoRunBtn(running) {
+    const btn = document.getElementById('ao-run-btn');
+    if (!btn) return;
+    if (running) {
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Demo';
+        btn.style.background = '#dc2626';
+    } else {
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Run Demo';
+        btn.style.background = '';
+    }
+}
+
+function toggleAoDemo() {
+    if (_aoRunning) stopAoDemo(); else startAoDemo();
+}
+
+function startAoDemo() {
+    _aoRunning = true;
+    updateAoRunBtn(true);
+    setAoStatus('Starting rpmsg_audio_offload_example…', '#f59e0b', true);
+    fetch('/audio-offload/run')
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+        .then(() => {
+            setAoStatus('Connecting to audio offload…', '#f59e0b', true);
+            connectAoWs();
+        })
+        .catch(err => {
+            setAoStatus('Error: ' + err.message, '#ef4444', false);
+            _aoRunning = false;
+            updateAoRunBtn(false);
+        });
+}
+
+function stopAoDemo() {
+    fetch('/audio-offload/stop').catch(() => {});
+    _aoRunning = false;
+    if (_aoWs) { try { _aoWs.close(); } catch (_) {} _aoWs = null; }
+    setAoStatus('Stopped', '#64748b', false);
+    updateAoRunBtn(false);
+    _aoTsAmp.fill(0); _aoTsLat.fill(0); _aoTsCpu.fill(0); _aoTsDsp.fill(0);
+    _aoTsIdx = 0; _aoTsCount = 0;
+    ['ao-spec-in','ao-spec-out','ao-ts-amp','ao-ts-lat','ao-ts-load'].forEach(id => {
+        const c = document.getElementById(id);
+        if (c) { const ctx = c.getContext('2d'); ctx.fillStyle = '#05080f'; ctx.fillRect(0, 0, c.width, c.height); }
+    });
+}
+
+function connectAoWs() {
+    if (_aoWs && (_aoWs.readyState === 0 || _aoWs.readyState === 1)) return;
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    _aoWs = new WebSocket(`${proto}//${location.host}/audio-offload`);
+    _aoWs.onmessage = e => {
+        try {
+            const d = JSON.parse(e.data);
+            if (d.type === 'status') {
+                const c = d.state === 'connected' ? '#22c55e' : d.state === 'connecting' ? '#f59e0b' : '#64748b';
+                setAoStatus(d.message, c, d.state === 'connecting');
+            } else if (d.type === 'audio') {
+                const which = d.channel === 'input' ? 'in' : 'out';
+                _drawAoSpectrumLine(which, d.pcm);
+            } else if (d.type === 'metrics') {
+                const el = id => document.getElementById(id);
+                const amp = d.avgAmp  != null ? d.avgAmp  : 0;
+                const lat = d.latency != null ? d.latency : 0;
+                const cpu = d.cpuLoad != null ? d.cpuLoad : 0;
+                const dsp = d.dspLoad != null ? d.dspLoad : 0;
+                el('ao-m-frame').textContent   = d.frame  != null ? d.frame           : '--';
+                el('ao-m-latency').textContent = lat ? lat.toFixed(2) + ' ms'         : '-- ms';
+                el('ao-m-cpu').textContent     = cpu ? cpu.toFixed(1) + '%'           : '--%';
+                el('ao-m-dsp').textContent     = dsp ? dsp.toFixed(1) + '%'           : '--%';
+                _aoTsPush(amp, lat, cpu, dsp);
+                _drawAoTrendLine('ao-ts-amp',  _aoTsAmp, '#22d3ee', '');
+                _drawAoTrendLine('ao-ts-lat',  _aoTsLat, '#22c55e', 'ms');
+                _drawAoLoadChart();
+            }
+        } catch (err) { console.warn('[ao-ws] parse error:', err); }
+    };
+    _aoWs.onclose = () => { if (_aoRunning) setAoStatus('Connection lost', '#ef4444', false); };
+    _aoWs.onerror = err => console.warn('[ao-ws] error:', err);
+}
+
+function setAoFilter(enable) {
+    const on  = document.getElementById('ao-filter-on');
+    const off = document.getElementById('ao-filter-off');
+    const activeStyle   = 'flex:1;padding:5px 8px;background:#1d4ed8;border:1px solid #2563eb;color:#e2e8f0;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;';
+    const inactiveStyle = 'flex:1;padding:5px 8px;background:#0f172a;border:1px solid #1e2a3a;color:#64748b;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;';
+    if (on)  on.style.cssText  = enable  ? activeStyle : inactiveStyle;
+    if (off) off.style.cssText = !enable ? activeStyle : inactiveStyle;
+    if (_aoWs && _aoWs.readyState === 1)
+        _aoWs.send(JSON.stringify({ type: 'set_filter', value: enable ? 1 : 0 }));
+}
+
+function setAoMode(mode) {
+    const dsp = document.getElementById('ao-mode-dsp');
+    const arm = document.getElementById('ao-mode-arm');
+    const activeStyle   = 'flex:1;padding:5px 8px;background:#1d4ed8;border:1px solid #2563eb;color:#e2e8f0;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;';
+    const inactiveStyle = 'flex:1;padding:5px 8px;background:#0f172a;border:1px solid #1e2a3a;color:#64748b;font-size:11px;font-weight:600;border-radius:5px;cursor:pointer;';
+    if (dsp) dsp.style.cssText = (mode === 'DSP') ? activeStyle : inactiveStyle;
+    if (arm) arm.style.cssText = (mode === 'ARM') ? activeStyle : inactiveStyle;
+    if (_aoWs && _aoWs.readyState === 1)
+        _aoWs.send(JSON.stringify({ type: 'set_mode', value: mode }));
+}
+
+/* ── AUDIO OFFLOAD VISUALIZATION ── */
+const _aoSpecLastDraw = {};
+const _aoSpecFFTRe    = new Float64Array(512);
+const _aoSpecFFTIm    = new Float64Array(512);
+
+/* Time-series ring buffers (fed from metrics messages) */
+const AO_TS_LEN = 200;
+const _aoTsAmp  = new Float32Array(AO_TS_LEN);
+const _aoTsLat  = new Float32Array(AO_TS_LEN);
+const _aoTsCpu  = new Float32Array(AO_TS_LEN);
+const _aoTsDsp  = new Float32Array(AO_TS_LEN);
+let _aoTsIdx    = 0;
+let _aoTsCount  = 0;
+
+function _aoTsPush(amp, lat, cpu, dsp) {
+    _aoTsAmp[_aoTsIdx] = amp;
+    _aoTsLat[_aoTsIdx] = lat;
+    _aoTsCpu[_aoTsIdx] = cpu;
+    _aoTsDsp[_aoTsIdx] = dsp;
+    _aoTsIdx = (_aoTsIdx + 1) % AO_TS_LEN;
+    if (_aoTsCount < AO_TS_LEN) _aoTsCount++;
+}
+
+/**
+ * Draw a frequency spectrum as a dBFS line chart (matches Python audmon.py output).
+ * Y: 0 to -100 dBFS with grid lines.  X: 0 to 16 kHz with frequency labels.
+ */
+function _drawAoSpectrumLine(which, b64pcm) {
+    const now = performance.now();
+    if (now - (_aoSpecLastDraw[which] || 0) < 40) return;
+    _aoSpecLastDraw[which] = now;
+
+    const raw = atob(b64pcm);
+    const N   = 512;
+    const n   = Math.min(N, raw.length >> 1);
+    for (let i = 0; i < N; i++) {
+        if (i < n) {
+            const lo = raw.charCodeAt(i * 2) & 0xff;
+            const hi = raw.charCodeAt(i * 2 + 1) & 0xff;
+            let s = (hi << 8) | lo;
+            if (s >= 32768) s -= 65536;
+            _aoSpecFFTRe[i] = s / 32768;
+        } else { _aoSpecFFTRe[i] = 0; }
+        _aoSpecFFTIm[i] = 0;
+    }
+    for (let i = 0; i < N; i++) {
+        const w = 0.42 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1))
+                       + 0.08 * Math.cos(4 * Math.PI * i / (N - 1));
+        _aoSpecFFTRe[i] *= w;
+    }
+    _fft(_aoSpecFFTRe, _aoSpecFFTIm);
+
+    const canvas = document.getElementById('ao-spec-' + which);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const PL = 42, PR = 8, PT = 10, PB = 22;   /* padding: left, right, top, bottom */
+    const PW = W - PL - PR, PH = H - PT - PB;
+    const DB_MIN = -100, DB_MAX = 0;
+    const SR = 48000, MAX_HZ = 16000;
+    const MAX_BIN = Math.round(MAX_HZ / (SR / N));   /* ≈ 170 */
+
+    /* Background */
+    ctx.fillStyle = '#05080f';
+    ctx.fillRect(0, 0, W, H);
+
+    /* Grid lines + Y labels */
+    ctx.font = '9px monospace';
+    ctx.fillStyle = '#3d5068';
+    ctx.textAlign = 'right';
+    [-100, -75, -50, -25, 0].forEach(db => {
+        const y = PT + (db - DB_MAX) / (DB_MIN - DB_MAX) * PH;
+        ctx.strokeStyle = '#1a2f4a';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
+        ctx.fillStyle = '#3d5068';
+        ctx.fillText(db, PL - 3, y + 3);
+    });
+
+    /* X labels */
+    ctx.textAlign = 'center';
+    [0, 1000, 2000, 4000, 8000, 12000, 16000].forEach(hz => {
+        const x = PL + (Math.round(hz / (SR / N)) / MAX_BIN) * PW;
+        if (x < PL || x > W - PR) return;
+        ctx.strokeStyle = '#1a2f4a';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(x, PT); ctx.lineTo(x, H - PB); ctx.stroke();
+        ctx.fillStyle = '#3d5068';
+        ctx.fillText(hz === 0 ? '0' : (hz >= 1000 ? (hz / 1000) + 'k' : hz), x, H - 6);
+    });
+
+    /* Axes */
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PL, PT); ctx.lineTo(PL, H - PB); ctx.lineTo(W - PR, H - PB); ctx.stroke();
+
+    /* Spectrum line */
+    ctx.strokeStyle = which === 'in' ? '#22c55e' : '#3b82f6';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let b = 1; b <= MAX_BIN; b++) {
+        const re = _aoSpecFFTRe[b], im = _aoSpecFFTIm[b];
+        const db = 20 * Math.log10(Math.sqrt(re * re + im * im) + 1e-9);
+        const x  = PL + (b / MAX_BIN) * PW;
+        const y  = PT + (_clamp(db, DB_MIN, DB_MAX) - DB_MAX) / (DB_MIN - DB_MAX) * PH;
+        if (b === 1) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+/**
+ * Draw a time-series line chart with auto-scaled Y axis.
+ */
+function _drawAoTrendLine(canvasId, buf, color, unit) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || _aoTsCount < 2) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const PL = 40, PR = 6, PT = 6, PB = 14;
+    const PW = W - PL - PR, PH = H - PT - PB;
+
+    /* Auto-scale */
+    const n = Math.min(_aoTsCount, AO_TS_LEN);
+    const startIdx = _aoTsCount < AO_TS_LEN ? 0 : _aoTsIdx;
+    let vMin = Infinity, vMax = -Infinity;
+    for (let i = 0; i < n; i++) {
+        const v = buf[(startIdx + i) % AO_TS_LEN];
+        if (v < vMin) vMin = v;
+        if (v > vMax) vMax = v;
+    }
+    if (vMin === vMax) { vMin -= 1; vMax += 1; }
+    const margin = (vMax - vMin) * 0.15 || 0.5;
+    vMin -= margin; vMax += margin;
+
+    ctx.fillStyle = '#05080f'; ctx.fillRect(0, 0, W, H);
+
+    /* Grid + Y labels (3 levels) */
+    ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    [vMin, (vMin + vMax) / 2, vMax].forEach(v => {
+        const y = PT + (1 - (v - vMin) / (vMax - vMin)) * PH;
+        ctx.strokeStyle = '#1a2f4a'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
+        ctx.fillStyle = '#3d5068';
+        ctx.fillText(v.toFixed(v < 10 ? 2 : 0) + (unit ? unit : ''), PL - 3, y + 3);
+    });
+
+    /* Axes */
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PL, PT); ctx.lineTo(PL, H - PB); ctx.lineTo(W - PR, H - PB); ctx.stroke();
+
+    /* Line */
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        const v = buf[(startIdx + i) % AO_TS_LEN];
+        const x = PL + (i / (n - 1)) * PW;
+        const y = PT + (1 - _clamp((v - vMin) / (vMax - vMin), 0, 1)) * PH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+/**
+ * Draw CPU + DSP load as two overlaid lines (0–100%).
+ */
+function _drawAoLoadChart() {
+    const canvas = document.getElementById('ao-ts-load');
+    if (!canvas || _aoTsCount < 2) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const PL = 40, PR = 6, PT = 6, PB = 14;
+    const PW = W - PL - PR, PH = H - PT - PB;
+    const n = Math.min(_aoTsCount, AO_TS_LEN);
+    const startIdx = _aoTsCount < AO_TS_LEN ? 0 : _aoTsIdx;
+
+    ctx.fillStyle = '#05080f'; ctx.fillRect(0, 0, W, H);
+
+    /* Grid */
+    ctx.font = '9px monospace'; ctx.textAlign = 'right';
+    [0, 50, 100].forEach(v => {
+        const y = PT + (1 - v / 100) * PH;
+        ctx.strokeStyle = '#1a2f4a'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(PL, y); ctx.lineTo(W - PR, y); ctx.stroke();
+        ctx.fillStyle = '#3d5068'; ctx.fillText(v + '%', PL - 3, y + 3);
+    });
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PL, PT); ctx.lineTo(PL, H - PB); ctx.lineTo(W - PR, H - PB); ctx.stroke();
+
+    /* CPU line (blue) */
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        const v = _aoTsCpu[(startIdx + i) % AO_TS_LEN];
+        const x = PL + (i / (n - 1)) * PW;
+        const y = PT + (1 - _clamp(v / 100, 0, 1)) * PH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    /* DSP line (amber) */
+    ctx.strokeStyle = '#f59e0b'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (let i = 0; i < n; i++) {
+        const v = _aoTsDsp[(startIdx + i) % AO_TS_LEN];
+        const x = PL + (i / (n - 1)) * PW;
+        const y = PT + (1 - _clamp(v / 100, 0, 1)) * PH;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    /* Legend */
+    ctx.textAlign = 'left'; ctx.font = '9px sans-serif';
+    ctx.fillStyle = '#3b82f6'; ctx.fillRect(W - 76, 9, 12, 2);
+    ctx.fillStyle = '#94a3b8'; ctx.fillText('CPU', W - 61, 13);
+    ctx.fillStyle = '#f59e0b'; ctx.fillRect(W - 36, 9, 12, 2);
+    ctx.fillStyle = '#94a3b8'; ctx.fillText('DSP', W - 21, 13);
 }
 
 /* ── STATUS BAR ── */
