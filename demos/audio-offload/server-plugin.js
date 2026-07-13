@@ -360,7 +360,7 @@ module.exports = function registerAudioOffload(app, wss, device) {
         if (MOCK) { stopMock(); return res.send('Audio offload stopped (MOCK)'); }
         disconnectTcp();
         if (offloadProc) {
-            try { offloadProc.kill('SIGTERM'); } catch (_) {}
+            try { offloadProc.kill('SIGINT'); } catch (_) {}
             offloadProc = null;
         }
         res.send('Audio offload stopped');
@@ -423,7 +423,7 @@ module.exports = function registerAudioOffload(app, wss, device) {
 
     function _cleanup() {
         if (MOCK) stopMock(); else disconnectTcp();
-        if (offloadProc) { try { offloadProc.kill('SIGTERM'); } catch (_) {} offloadProc = null; }
+        if (offloadProc) { try { offloadProc.kill('SIGINT'); } catch (_) {} offloadProc = null; }
     }
     process.on('SIGTERM', _cleanup);
     process.on('SIGINT',  _cleanup);
