@@ -29,24 +29,33 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * speech_utils.c
+/**
+ * @file speech_utils.c
+ * @brief Speech-to-text utility for the TI AM62D demo portal.
  *
- * Speech-to-text using Silero en_v5.onnx via NNStreamer + ONNX Runtime.
+ * Enumerates ALSA capture devices and drives a GStreamer NNStreamer
+ * pipeline that performs real-time speech-to-text using the Silero
+ * en_v5.onnx model via ONNX Runtime.  Transcripts are written to a
+ * named FIFO consumed by the Node.js webserver plugin and forwarded
+ * to the browser over WebSocket.
  *
- * Pipeline:
+ * Pipeline (live device source):
+ * @code
  *   alsasrc → audioconvert → tensor_converter → tensor_aggregator
  *   → tensor_transform (S16LE→F32, normalise) → tensor_filter (onnxruntime)
- *   → tensor_sink (greedy CTC decode → FIFO)
+ *   → tensor_sink (greedy CTC decode) → FIFO
+ * @endcode
  *
- * Output FIFO: /tmp/speech_classification_fifo   (one transcript line per flush)
- * PID file:    /tmp/speech_classification.pid
+ * Output FIFO : /tmp/speech_classification_fifo  (one transcript per flush)
+ * PID file    : /tmp/speech_classification.pid
  *
- * Usage:
+ * @par Usage
+ * @code
  *   speech_utils devices
- *   speech_utils start_gst [device]   e.g. plughw:1,0
+ *   speech_utils start_gst [device]   # e.g. plughw:1,0
  *   speech_utils stop_gst
  *   speech_utils status
+ * @endcode
  */
 
 #include <stdio.h>
@@ -70,10 +79,21 @@ typedef struct {
 static audio_device_info audio_devices[MAX_DEVICES];
 static int device_count = 0;
 
-/*
- * Parse one line of `arecord -l` / `aplay -l` output.
- * Format: card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
- * Populates audio_devices[device_count]. Returns 1 on success, 0 to skip.
+/**
+ * @brief Parse one line of @c arecord @c -l / @c aplay @c -l output.
+ *
+ * Expected format:
+ * @verbatim
+ * card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
+ * @endverbatim
+ *
+ * On success, populates @c audio_devices[device_count] with the
+ * @c plughw:N,D ALSA identifier and a @c "CARD_NAME: DEV_SHORT"
+ * display name.  Devices matching HDMI, webcam, camera, or cape
+ * patterns are silently skipped.
+ *
+ * @param line  Null-terminated line from arecord/aplay output.
+ * @return 1 if a valid device entry was populated, 0 to skip.
  */
 static int parse_alsa_line(const char *line)
 {
@@ -134,6 +154,14 @@ static int parse_alsa_line(const char *line)
     return 1;
 }
 
+/**
+ * @brief Enumerate ALSA recording devices via @c arecord @c -l.
+ *
+ * Runs @c arecord @c -l, parses every card+device combination through
+ * parse_alsa_line(), and populates the module-static @c audio_devices[]
+ * array and @c device_count.  Prints an error message to stdout if
+ * @c arecord is unavailable or no devices are found.
+ */
 static void get_arecord_devices(void)
 {
     FILE *fp;
@@ -161,6 +189,17 @@ static void get_arecord_devices(void)
 /* ------------------------------------------------------------------ */
 /*  main                                                                */
 /* ------------------------------------------------------------------ */
+/**
+ * @brief Entry point – dispatches to the requested sub-command.
+ *
+ * | argv[1]  | Behaviour |
+ * |----------|-----------|
+ * | devices  | Print all ALSA capture devices as @c "plughw:C,D|NAME\\n" |
+ *
+ * @param argc  Argument count.
+ * @param argv  Argument vector.
+ * @return 0 on success, 1 on unrecognised command.
+ */
 int main(int argc, char *argv[])
 {
     if (argc > 1 && strcmp(argv[1], "devices") == 0) {
