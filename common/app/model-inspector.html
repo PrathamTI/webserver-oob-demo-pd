@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>(function(){var B=1280;function r(){var s=window.innerWidth/B;document.documentElement.style.zoom=s<1?s:'';}r();window.addEventListener('resize',r);})();</script>
-    <title>AI Model Inspector - TI AM62D Demo Portal</title>
+    <title>AI Model Inspector - TI Sitara AM62D Edge AI Portal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -97,6 +97,15 @@
             color: #4da6ff; font-size: 11px; font-weight: 700;
             padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px;
         }
+
+        .fs-btn {
+            background: none; border: 1px solid #1e2a3a; color: #64748b;
+            cursor: pointer; padding: 4px 5px; border-radius: 4px;
+            line-height: 1; display: flex; align-items: center;
+            transition: color .15s, border-color .15s; flex-shrink: 0;
+        }
+        .fs-btn:hover { color: #e2e8f0; border-color: #4da6ff; }
+        .main:fullscreen { border-radius: 0; overflow-y: auto; background: #0a0e1a; }
 
         /* ── INSPECTOR GRID ── */
         .inspector-grid {
@@ -331,8 +340,8 @@
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle navigation">&#9776;</button>
         <div class="ti-logo"><img src="ti-logo.png" alt="Texas Instruments"></div>
         <div>
-            <span class="brand-main">TI AM62D</span>
-            <span class="brand-sub">DEMO PORTAL</span>
+            <span class="brand-main">TI SITARA</span>
+            <span class="brand-sub">EDGE AI PORTAL</span>
         </div>
     </div>
     <div class="navbar-right">
@@ -397,7 +406,7 @@
     </aside>
 
     <!-- MAIN -->
-    <main class="main">
+    <main class="main" id="mi-main">
 
         <!-- Page Header -->
         <div class="page-hdr">
@@ -410,7 +419,10 @@
                     <div class="ph-sub">Browse and inspect AI models deployed on the AM62D platform via TIDL inference engine.</div>
                 </div>
             </div>
-            <span class="ph-badge">TIDL Runtime</span>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <span class="ph-badge">TIDL Runtime</span>
+                <button class="fs-btn" onclick="toggleFullscreen(this,document.getElementById('mi-main'))" title="Fullscreen"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/></svg></button>
+            </div>
         </div>
 
         <!-- Inspector Grid -->
@@ -469,6 +481,25 @@
 </div>
 
 <script>
+/* ── FULLSCREEN ── */
+let _fsBtn = null;
+document.addEventListener('fullscreenchange', () => {
+    if (_fsBtn && !document.fullscreenElement) { _updateFsIcon(_fsBtn, false); _fsBtn = null; }
+});
+function toggleFullscreen(btn, elem) {
+    if (!document.fullscreenElement) {
+        elem.requestFullscreen().catch(err => console.warn('[fs]', err));
+        _fsBtn = btn; _updateFsIcon(btn, true);
+    } else { document.exitFullscreen(); }
+}
+function _updateFsIcon(btn, isFs) {
+    const svg = btn.querySelector('svg'); if (!svg) return;
+    svg.innerHTML = isFs
+        ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18-5h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3m8 0v-3a2 2 0 0 1 2-2h3"/>'
+        : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>';
+    btn.title = isFs ? 'Exit fullscreen (Esc)' : 'Fullscreen';
+}
+
 /* ── SIDEBAR TOGGLE (small screens) ── */
 function toggleSidebar() {
     document.querySelector('.sidebar').classList.toggle('open');

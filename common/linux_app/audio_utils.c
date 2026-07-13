@@ -31,6 +31,35 @@
  *
  */
 
+/**
+ * @file audio_utils.c
+ * @brief Audio classification utility for the TI AM62D demo portal.
+ *
+ * Enumerates ALSA capture/playback devices and drives a GStreamer
+ * NNStreamer pipeline that classifies audio in real-time using the
+ * YAMNet TFLite model.  Classification labels are written to a named
+ * FIFO consumed by the Node.js webserver plugin and forwarded to the
+ * browser over WebSocket.
+ *
+ * Pipeline (live device source):
+ * @code
+ *   alsasrc → audioconvert → tensor_converter → tensor_aggregator
+ *   → tensor_transform (S16LE→F32, normalise) → tensor_filter (tflite/XNNPACK)
+ *   → tensor_decoder (image_labeling) → filesink → FIFO
+ * @endcode
+ *
+ * Output FIFO : /tmp/audio_classification_fifo
+ * PID file    : /tmp/audio_classification.pid
+ *
+ * @par Usage
+ * @code
+ *   audio_utils devices
+ *   audio_utils start_gst [device]   # e.g. plughw:1,0
+ *   audio_utils stop_gst
+ *   audio_utils status
+ * @endcode
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -55,7 +84,14 @@ char fifo_path[256] = "/tmp/audio_classification_fifo";
 char pid_file[256] = "/tmp/audio_classification.pid";
 volatile int running = 0;
 
-// Signal handler for graceful shutdown
+/**
+ * @brief Signal handler for graceful pipeline shutdown.
+ *
+ * Clears the global @p running flag so the GStreamer monitor loop exits
+ * cleanly on SIGTERM or SIGINT.
+ *
+ * @param signum  Signal number received.
+ */
 void signal_handler(int signum) {
     if (signum == SIGTERM || signum == SIGINT) {
         fprintf(stderr, "Received signal %d, stopping audio classification\n", signum);
@@ -63,10 +99,21 @@ void signal_handler(int signum) {
     }
 }
 
-/*
- * Parse one line of `arecord -l` / `aplay -l` output.
- * Format: card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
- * Populates audio_devices[device_count] and returns 1 on success, 0 to skip.
+/**
+ * @brief Parse one line of @c arecord @c -l / @c aplay @c -l output.
+ *
+ * Expected format:
+ * @verbatim
+ * card N: SHORT [CARD_NAME], device D: LONG_NAME SHORT_NAME [...]
+ * @endverbatim
+ *
+ * On success, populates @c audio_devices[device_count] with the
+ * @c plughw:N,D ALSA identifier and a @c "CARD_NAME: DEV_SHORT"
+ * display name.  Devices matching HDMI, webcam, camera, or cape
+ * patterns are silently skipped.
+ *
+ * @param line  Null-terminated line from arecord/aplay output.
+ * @return 1 if a valid device entry was populated, 0 to skip.
  */
 static int parse_alsa_line(const char *line) {
     int card_num = -1, dev_num = -1;
@@ -133,7 +180,16 @@ static int parse_alsa_line(const char *line) {
     return 1;
 }
 
-// Get list of audio recording devices
+/**
+ * @brief Enumerate ALSA recording devices via @c arecord @c -l.
+ *
+ * Runs @c arecord @c -l, parses every card+device combination through
+ * parse_alsa_line(), and populates the global @c audio_devices[] array.
+ * Returns a heap-allocated, newline-separated list of display names
+ * (or an error message string).  The caller must @c free() the pointer.
+ *
+ * @return Heap-allocated device list string, or @c NULL on allocation failure.
+ */
 char* get_arecord_devices() {
     FILE *fp;
     char line[1035];
@@ -180,13 +236,35 @@ char* get_arecord_devices() {
     return device_list;
 }
 
-// Placeholder for update_label_text - will be handled by WebSocket in JS
+/**
+ * @brief Log a classification result to stderr.
+ *
+ * Result delivery to the UI is handled by the GStreamer filesink element
+ * writing labels to the FIFO; the Node.js server reads that FIFO and
+ * forwards results over WebSocket.  This function is retained for
+ * diagnostic logging only.
+ *
+ * @param text  Null-terminated classification label string.
+ */
 void update_label_text(const char* text) {
     // In a real scenario, this would send data over a socket or write to a shared memory.
     // For this demo, the GStreamer pipeline will write to a FIFO, and the JS server will read from it.
     fprintf(stderr, "Classification: %s\n", text);
 }
 
+/**
+ * @brief Thread function that runs the GStreamer audio classification pipeline.
+ *
+ * Creates the output FIFO, assembles and launches a @c gst-launch-1.0
+ * command string, then monitors the FIFO via @c select() until the
+ * global @p running flag is cleared (e.g. by signal_handler()).
+ * Classification labels read from the FIFO are echoed to stderr for
+ * debugging; the Node.js FIFO reader is the primary consumer.
+ * Cleans up the FIFO and pipeline handle on exit.
+ *
+ * @param arg  Unused thread argument (required by pthread API).
+ * @return NULL.
+ */
 void* gst_launch_thread(void *arg) {
     char buffer[256];  // Increased buffer size
 
@@ -302,7 +380,20 @@ void* gst_launch_thread(void *arg) {
     return NULL;
 }
 
-// Main function for testing or direct execution
+/**
+ * @brief Entry point – dispatches to the requested sub-command.
+ *
+ * | argv[1]    | Behaviour |
+ * |------------|-----------|
+ * | devices    | Print all ALSA capture devices as @c "plughw:C,D|NAME\\n" |
+ * | start_gst  | Start the classification pipeline; optional argv[2] selects the device |
+ * | stop_gst   | Send SIGTERM to the running instance via the PID file |
+ * | status     | Print @c RUNNING or @c STOPPED |
+ *
+ * @param argc  Argument count.
+ * @param argv  Argument vector.
+ * @return 0 on success, 1 on error or unrecognised command.
+ */
 int main(int argc, char *argv[]) {
     if (argc > 1 && strcmp(argv[1], "devices") == 0) {
         char *devices = get_arecord_devices();
