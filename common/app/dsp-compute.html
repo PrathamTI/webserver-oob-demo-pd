@@ -1544,6 +1544,13 @@ function loadLogsPanel() {
         document.getElementById('panel-body').innerHTML=`<div style="font-family:monospace;font-size:11px;background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:10px;overflow-y:auto;max-height:calc(100vh - 200px);">${lines.length?lines.map(l=>`<div style="padding:2px 0;color:${l.match(/error/i)?'#ef4444':l.match(/warn/i)?'#f59e0b':'#94a3b8'};word-break:break-all;">${l.replace(/</g,'&lt;')}</div>`).join(''):'<div style="color:#475569;text-align:center;padding:20px 0;">No log entries</div>'}</div>`;
     }).catch(()=>{document.getElementById('panel-body').innerHTML='<div style="color:#ef4444;font-size:13px;">Failed to load logs</div>';});
 }
+
+/* Stop running demos when navigating away so the backend sends proper SIGINT cleanup */
+window.addEventListener('pagehide', () => {
+    if (_aoRunning)       fetch('/audio-offload/stop',   { keepalive: true }).catch(() => {});
+    if (_biquadRunning)   fetch('/sigchain-biquad/stop', { keepalive: true }).catch(() => {});
+    if (_fft2dRunning)    fetch('/2dfft/stop',           { keepalive: true }).catch(() => {});
+});
 </script>
 
 <!-- ── HEALTH CHECK MODAL ── -->
