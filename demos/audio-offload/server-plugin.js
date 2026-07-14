@@ -89,10 +89,15 @@ module.exports = function registerAudioOffload(app, wss, device) {
     let mockMetricInt = null;
     let offloadProc   = null;
 
-    const BIN_PATH = (device && device.demoConfig &&
-                      device.demoConfig['audio-offload'] &&
-                      device.demoConfig['audio-offload'].binPath)
-                     || '/usr/bin/rpmsg_audio_offload_example';
+    const BIN_PATH  = (device && device.demoConfig &&
+                       device.demoConfig['audio-offload'] &&
+                       device.demoConfig['audio-offload'].binPath)
+                      || '/usr/bin/rpmsg_audio_offload_example';
+
+    const DEF_HOST  = (device && device.demoConfig &&
+                       device.demoConfig['audio-offload'] &&
+                       device.demoConfig['audio-offload'].host)
+                      || '127.0.0.1';
 
     /* ------------------------------------------------------------ */
     /* Helpers                                                       */
@@ -338,7 +343,7 @@ module.exports = function registerAudioOffload(app, wss, device) {
     app.get('/audio-offload/run', (req, res) => {
         if (MOCK) { startMock(); return res.send('Audio offload started (MOCK)'); }
         if (offloadProc) {
-            if (!tcpConnected) connectTcp('127.0.0.1');
+            if (!tcpConnected) connectTcp(DEF_HOST);
             return res.send('rpmsg_audio_offload_example already running');
         }
         console.log(`[audio-offload] Spawning ${BIN_PATH}`);
@@ -355,7 +360,7 @@ module.exports = function registerAudioOffload(app, wss, device) {
             if (tcpConnected) disconnectTcp();
         });
         /* Wait for binary to open TCP ports before connecting */
-        setTimeout(() => connectTcp('127.0.0.1'), 2000);
+        setTimeout(() => connectTcp(DEF_HOST), 2000);
         res.send('rpmsg_audio_offload_example started');
     });
 
