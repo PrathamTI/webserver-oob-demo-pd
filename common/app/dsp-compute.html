@@ -18,6 +18,8 @@
             --txt:#0f172a; --txt2:#475569; --txt3:#64748b; --txt4:#94a3b8;
             --bar-track:#e2e8f0;
         }
+	html[data-theme="light"] .brand-main { color: var(--txt) !important; }
+	html[data-theme="light"] .brand-sub  { color: #2563eb !important; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -342,15 +344,6 @@
                 </div>
 
                 <hr class="card-divider">
-
-                <!-- Signal Flow (collapsible) -->
-                <div class="sub-ttl sf-toggle" onclick="toggleSigFlow(this)">Signal Flow
-                    <svg class="sf-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
-                </div>
-                <div class="sf-body">
-                    <img src="images/audio-offload-flow.png" alt="Audio Offload Pipeline"
-                         style="width:100%;border-radius:8px;border:1px solid #1e2a3a;" onerror="this.style.display='none'">
-                </div>
 
                 <!-- Features -->
                 <div class="sub-ttl">Features</div>
@@ -691,6 +684,16 @@ document.querySelectorAll('.dsi').forEach((el, i) => {
     });
 });
 
+/* Check overlay for initially active demo on page load */
+document.addEventListener('DOMContentLoaded', () => {
+    const activeDemo = document.querySelector('.dsi.active');
+    if (activeDemo) {
+        const idx = Array.from(document.querySelectorAll('.dsi')).indexOf(activeDemo);
+        if (idx === 0 || idx === 1) checkConflictOverlay(idx);
+        else if (idx === 2) checkBiquadOverlay();
+    }
+});
+
 function triggerRun() {
     if (_activeDemo === 0) toggleAoDemo();
     else if (_activeDemo === 1) toggleFft2dDemo();
@@ -783,7 +786,7 @@ const _HC = (() => {
                 } else {
                     _modal('Device Disconnected', 'Please check cable connection or device state.', 'Reconnecting…');
                 }
-            }, 8000);
+            }, 2000);
         }
         clearTimeout(_reconnectTimer);
         _reconnectTimer = setTimeout(_connect, 3000);
