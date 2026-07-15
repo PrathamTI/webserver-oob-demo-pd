@@ -719,9 +719,13 @@ const _conflictActive = [false, false, false]; /* indexed by demo */
 function checkConflictOverlay(demoIdx) {
     const conflictId = demoIdx === 0 ? 'ao-overlay-conflict'   : 'fft2d-overlay-conflict';
     const runBtnId   = demoIdx === 0 ? 'ao-run-btn'            : 'fft2d-run-btn';
-    fetch('/sigchain-biquad/check-overlay')
-        .then(r => r.json())
+    fetch('/sigchain-biquad/check-overlay', { signal: AbortSignal.timeout(5000) })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(d => {
+            if (!d) return;
             _conflictActive[demoIdx] = !!d.active;
             const conflict = document.getElementById(conflictId);
             const btn      = document.getElementById(runBtnId);
@@ -734,7 +738,9 @@ function checkConflictOverlay(demoIdx) {
             }
             _updateTopBtn();
         })
-        .catch(() => {});
+        .catch(err => {
+            console.debug('Overlay check unavailable:', err.message);
+        });
 }
 
 /* ── HEALTH CHECK — dedicated WebSocket for instant connect/disconnect detection ── */
@@ -1262,9 +1268,13 @@ function checkBiquadOverlay() {
     const ok   = document.getElementById('biquad-overlay-ok');
     const btn  = document.getElementById('biquad-run-btn');
     setBiquadStatus('Checking overlay…', '#64748b', false);
-    fetch('/sigchain-biquad/check-overlay')
-        .then(r => r.json())
+    fetch('/sigchain-biquad/check-overlay', { signal: AbortSignal.timeout(5000) })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(d => {
+            if (!d) return;
             _biquadOverlayActive = !!d.active;
             if (d.active) {
                 if (warn) warn.style.display = 'none';
@@ -1278,7 +1288,8 @@ function checkBiquadOverlay() {
                 setBiquadStatus('Overlay not set — demo disabled', '#d97706', false);
             }
         })
-        .catch(() => {
+        .catch(err => {
+            console.debug('Overlay check failed:', err.message);
             if (warn) warn.style.display = 'none';
             if (ok)   ok.style.display   = 'none';
             setBiquadStatus('Could not read uEnv.txt', '#ef4444', false);

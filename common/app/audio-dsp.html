@@ -1746,14 +1746,19 @@ function saveSettings() {
 
 /* ── DSP audio overlay conflict check ── */
 function _checkDspOverlayConflict() {
-    fetch('/sigchain-biquad/check-overlay')
-        .then(r => r.json())
+    fetch('/sigchain-biquad/check-overlay', { signal: AbortSignal.timeout(5000) })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(d => {
-            if (d.active) {
+            if (d && d.active) {
                 document.getElementById('dsp-overlay-modal').style.display = 'flex';
             }
         })
-        .catch(() => {});
+        .catch(err => {
+            console.debug('Overlay check unavailable:', err.message);
+        });
 }
 
 /* ── HEALTH CHECK — dedicated WebSocket for instant connect/disconnect detection ── */
