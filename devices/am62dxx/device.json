@@ -1,0 +1,63 @@
+{
+  "id": "am62dxx",
+  "displayName": "AM62D",
+  "boards": [
+    {
+      "name": "SK-AM62D",
+      "description": "Starter Kit for AM62D processors — expandable audio platform with quad Cortex-A53 and C7x DSP, optimized for premium audio processing, noise reduction, and AI-powered speech enhancement.",
+      "image": "images/sk-am62d-angled.png"
+    }
+  ],
+  "soc": "AM62Dx quad Cortex-A53 @ 1.4GHz + C7x DSP",
+  "demos": ["cpu-monitor", "tvm-inference", "audio-classification", "speech-enhancement", "audio-offload", "2dfft", "sigchain-biquad"],
+  "demoConfig": {
+    "tvm-inference": {
+      "artifactsPath": "/root/artifacts_mobilenet_v2_tv-onnx/",
+      "modelName": "MobileNet v2",
+      "description": "Hardware-accelerated inference using TVM+TIDL on C7x DSP"
+    }
+  },
+  "docs": {
+    "subtitle": "Everything you need to develop with AM62D Sitara processors",
+    "cards": [
+      {
+        "title": "Product Page",
+        "description": "Explore specifications, features, and ordering information for the AM62D Sitara processor family",
+        "url": "https://www.ti.com/product/AM62D4",
+        "linkText": "View Product",
+        "badge": "Official",
+        "icon": "hardware:developer_board"
+      },
+      {
+        "title": "Processor SDK",
+        "description": "Linux development kit with drivers, libraries, and ready-to-run example applications",
+        "url": "https://www.ti.com/tool/PROCESSOR-SDK-AM62DX",
+        "linkText": "Get SDK",
+        "badge": "Latest",
+        "icon": "file:folder"
+      },
+      {
+        "title": "Getting Started Guide",
+        "description": "Step-by-step guides for SDK installation, building applications, and deployment",
+        "url": "https://software-dl.ti.com/processor-sdk-linux/esd/AM62DX/latest/exports/docs/linux/Overview/Processor_SDK_Linux_Getting_Started_Guide.html",
+        "linkText": "Browse Docs",
+        "badge": "Guides",
+        "icon": "action:article"
+      },
+      {
+        "title": "Community Forum",
+        "description": "Get help from TI engineers and connect with thousands of embedded developers",
+        "url": "https://e2e.ti.com/support/processors/",
+        "linkText": "Join Discussion",
+        "badge": "Active",
+        "icon": "communication:forum"
+      }
+    ],
+    "quickLinks": [
+      { "text": "Code Composer Studio", "url": "https://www.ti.com/tool/CCSTUDIO", "icon": "action:build" },
+      { "text": "TI Resource Explorer", "url": "https://dev.ti.com/tirex/", "icon": "action:explore" },
+      { "text": "SysConfig Tool", "url": "https://www.ti.com/tool/SYSCONFIG", "icon": "action:settings" },
+      { "text": "E2E Processor Forum", "url": "https://e2e.ti.com/support/processors/", "icon": "communication:chat" }
+    ]
+  }
+}
