@@ -17,6 +17,7 @@ const MOCK = process.env.MOCK === '1';
 const WS_OPEN = 1;
 const JOB_ROOT = '/tmp/webserver-oob-speech';
 
+
 function rawBody(limitBytes) {
     return (req, res, next) => {
         const chunks = [];
@@ -160,48 +161,54 @@ module.exports = function registerSpeechEnhancement(app, wss, device) {
     }
 
     function startEdgeAi(inputPath) {
+        console.log('[speech-enhancement] startEdgeAi called with inputPath:', inputPath);
         if (job) throw new Error('Speech enhancement is already running');
         lastCompletedJob = null;
-        readPcmWav(inputPath); // Validate before switching C7x firmware.
         fs.mkdirSync(JOB_ROOT, { recursive: true });
         const jobDir = fs.mkdtempSync(path.join(JOB_ROOT, 'job-'));
         const outputPath = path.join(jobDir, outputName);
+        console.log('[speech-enhancement] jobDir:', jobDir, 'outputPath:', outputPath);
+
+        console.log('[speech-enhancement] validating WAV file');
+        readPcmWav(inputPath); // Validate WAV before switching C7x firmware.
         job = { inputPath, outputPath, process: null, cancelled: false, stdout: '', dmaFrames: false };
-
         send({ type: 'metric', label: 'Waiting for RPMsg DMA input/output buffers' });
-
-        if (MOCK) {
-            const timer = setTimeout(() => {
-                if (!job) return;
-                fs.copyFileSync(inputPath, outputPath);
-                send({ type: 'metric', label: 'MOCK mode: input copied to output; no C7x processing occurred' });
-                finishJob();
-            }, 150);
-            streamTimers.push(timer);
-            return;
-        }
+        console.log('[speech-enhancement] checking binary:', binary);
         if (!fs.existsSync(binary)) throw new Error(`Edge-AI client not installed: ${binary}`);
+        console.log('[speech-enhancement] checking pipelinePath:', pipelinePath);
         if (!fs.existsSync(pipelinePath)) throw new Error(`Edge-AI pipeline config not installed: ${pipelinePath}`);
+        console.log('[speech-enhancement] checking artifactsPath:', artifactsPath);
         if (!artifactsPath || !fs.existsSync(artifactsPath)) throw new Error('Configure speech-enhancement.artifactsPath with the installed Neo-TVM artifacts directory');
 
-        const child = spawn(binary, [], { cwd: jobDir, stdio: ['pipe', 'pipe', 'pipe'] });
+        console.log('[speech-enhancement] spawning binary with args:', [binary, '--ISTFT', outputPath]);
+        const child = spawn(binary, ['--ISTFT', outputPath], { cwd: jobDir, stdio: ['pipe', 'pipe', 'pipe'] });
         job.process = child;
+        console.log('[speech-enhancement] child process spawned, pid:', child.pid);
         connectDmaStream();
         const collect = data => {
             const text = data.toString();
             if (job) job.stdout += text;
+            console.log('[speech-enhancement] child stdout:', text.trim());
             text.split('\n').filter(Boolean).forEach(line => {
                 if (/Processing chunk|STFT|ISTFT|TVM|RMS|success/i.test(line)) send({ type: 'metric', label: line.replace(/^\[App\]\s*/, '').slice(0, 180) });
             });
         };
         child.stdout.on('data', collect);
-        child.stderr.on('data', collect);
-        child.on('error', error => finishJob(error));
-        child.on('close', code => {
+        child.stderr.on('data', (data) => {
+            const text = data.toString();
+            console.log('[speech-enhancement] child stderr:', text.trim());
+        });
+        child.on('error', (error) => {
+            console.log('[speech-enhancement] child error:', error);
+            finishJob(error);
+        });
+        child.on('close', (code) => {
+            console.log('[speech-enhancement] child closed with code:', code);
             if (!job || job.process !== child) return;
             if (job.cancelled) return;
             finishJob(code === 0 ? null : new Error(`Edge-AI client exited with ${code}`));
         });
+        console.log('[speech-enhancement] writing to stdin');
         child.stdin.end(`pipeline ${pipelinePath}\ntvm_artifacts ${artifactsPath}\ninput ${inputPath}\nrun\nquit\n`);
     }
 
