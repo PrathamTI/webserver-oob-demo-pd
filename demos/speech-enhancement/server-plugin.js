@@ -65,10 +65,10 @@ function readPcmWav(filename) {
 
 module.exports = function registerSpeechEnhancement(app, wss, device) {
     const config = (device.demoConfig || {})['speech-enhancement'] || {};
-    const binary = config.edgeAiBinary || '/usr/bin/rpmsg_inference_example';
-    const pipelinePath = config.pipelinePath || '/usr/share/webserver-oob/demos/speech-enhancement/audio_pipeline_clean.json';
-    const artifactsPath = config.artifactsPath || '';
-    const inputPath = config.inputPath || '/usr/share/input.wav';
+    const binary = config.edgeAiBinary || '/usr/bin/rpmsg_inference_example /usr/bin/rpmsg_inference_example';
+    const tvmDir = config.tvmDir || '/usr/share/tvm_inference';
+    const inputPath = config.inputPath || '/usr/share/tvm_inference/input_audio/input_audio.wav';
+    const jsonFile = config.jsonFile || 'pipeline_stft_istft.json';
     const outputName = config.outputName || 'processed_output.wav';
     const streamSocket = config.streamSocket || '/tmp/edge-ai-speech.sock';
     const clients = new Set();
@@ -175,13 +175,20 @@ module.exports = function registerSpeechEnhancement(app, wss, device) {
         send({ type: 'metric', label: 'Waiting for RPMsg DMA input/output buffers' });
         console.log('[speech-enhancement] checking binary:', binary);
         if (!fs.existsSync(binary)) throw new Error(`Edge-AI client not installed: ${binary}`);
-        console.log('[speech-enhancement] checking pipelinePath:', pipelinePath);
-        if (!fs.existsSync(pipelinePath)) throw new Error(`Edge-AI pipeline config not installed: ${pipelinePath}`);
-        console.log('[speech-enhancement] checking artifactsPath:', artifactsPath);
-        if (!artifactsPath || !fs.existsSync(artifactsPath)) throw new Error('Configure speech-enhancement.artifactsPath with the installed Neo-TVM artifacts directory');
+        const baseJsonPath = path.join(tvmDir, jsonFile);
+        console.log('[speech-enhancement] checking pipeline config:', baseJsonPath);
+        if (!fs.existsSync(baseJsonPath)) throw new Error(`Edge-AI pipeline config not installed: ${baseJsonPath}`);
 
-        console.log('[speech-enhancement] spawning binary with args:', [binary, '--ISTFT', outputPath]);
-        const child = spawn(binary, ['--ISTFT', outputPath], { cwd: jobDir, stdio: ['pipe', 'pipe', 'pipe'] });
+        // Write a per-job JSON with the correct input_file path so the binary
+        // processes the right audio without modifying the installed template.
+        const baseJson = JSON.parse(fs.readFileSync(baseJsonPath, 'utf8'));
+        const jobJson = Object.assign({}, baseJson, { input_file: inputPath });
+        const jobJsonPath = path.join(jobDir, 'pipeline.json');
+        fs.writeFileSync(jobJsonPath, JSON.stringify(jobJson));
+        console.log('[speech-enhancement] wrote per-job JSON:', jobJsonPath);
+
+        console.log('[speech-enhancement] spawning binary with args:', [jobJsonPath]);
+        const child = spawn(binary, [jobJsonPath], { cwd: jobDir, stdio: ['pipe', 'pipe', 'pipe'] });
         job.process = child;
         console.log('[speech-enhancement] child process spawned, pid:', child.pid);
         connectDmaStream();
@@ -208,8 +215,6 @@ module.exports = function registerSpeechEnhancement(app, wss, device) {
             if (job.cancelled) return;
             finishJob(code === 0 ? null : new Error(`Edge-AI client exited with ${code}`));
         });
-        console.log('[speech-enhancement] writing to stdin');
-        child.stdin.end(`pipeline ${pipelinePath}\ntvm_artifacts ${artifactsPath}\ninput ${inputPath}\nrun\nquit\n`);
     }
 
     function stopJob() {
