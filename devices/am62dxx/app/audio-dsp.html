@@ -44,6 +44,15 @@
         .conn-top { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--txt); }
         .conn-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; animation: pulse 2s infinite; }
         @keyframes pulse { 0%,100%{box-shadow:0 0 4px #22c55e} 50%{box-shadow:0 0 14px #22c55e} }
+        @keyframes bar-rise { 0%,100%{height:3px} 50%{height:14px} }
+        .bar-anim { display:none;align-items:flex-end;gap:2px;height:16px;flex-shrink:0; }
+        .bar-anim.active { display:inline-flex; }
+        .bar-anim span { display:inline-block;width:3px;border-radius:1px;height:3px;animation:bar-rise 0.7s ease-in-out infinite; }
+        .bar-anim span:nth-child(1){animation-delay:0s}
+        .bar-anim span:nth-child(2){animation-delay:0.1s}
+        .bar-anim span:nth-child(3){animation-delay:0.2s}
+        .bar-anim span:nth-child(4){animation-delay:0.3s}
+        .bar-anim span:nth-child(5){animation-delay:0.15s}
         .conn-ip { font-size: 11px; color: var(--txt3); text-align: right; margin-top: 2px; }
         .theme-btn { background: none; border: none; color: var(--txt2); cursor: pointer; font-size: 20px; padding: 6px; border-radius: 8px; line-height: 1; }
         .theme-btn:hover { color: var(--txt); }
@@ -375,6 +384,7 @@
                     </div>
                     <div style="display:flex;align-items:center;gap:7px;font-size:12px;">
                         <span id="tvm-demo-dot" style="width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
+                        <span class="bar-anim" id="tvm-demo-bars"><span></span><span></span><span></span><span></span><span></span></span>
                         <span id="tvm-demo-status" style="color:#64748b;">Ready</span>
                     </div>
                     <div id="tvm-demo-results" style="display:none;">
@@ -555,6 +565,7 @@
                     <!-- Status -->
                     <div style="display:flex;align-items:center;gap:7px;font-size:12px;">
                         <span id="speech-status-dot" style="width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0;"></span>
+                        <span class="bar-anim" id="speech-status-bars"><span></span><span></span><span></span><span></span><span></span></span>
                         <span id="speech-status-txt" style="color:#64748b;">Not running</span>
                     </div>
                     <hr class="card-divider">
@@ -1095,10 +1106,15 @@ function clearSpeechResults() {
 }
 
 function setSpeechStatus(msg, color, pulse) {
-    const txt = document.getElementById('speech-status-txt');
-    const dot = document.getElementById('speech-status-dot');
+    const txt  = document.getElementById('speech-status-txt');
+    const dot  = document.getElementById('speech-status-dot');
+    const bars = document.getElementById('speech-status-bars');
     if (txt) { txt.textContent = msg; txt.style.color = color; }
-    if (dot) { dot.style.background = color; dot.style.animation = pulse ? 'pulse 2s infinite' : 'none'; }
+    if (dot)  { dot.style.display = pulse ? 'none' : 'inline-block'; dot.style.background = color; }
+    if (bars) {
+        bars.classList.toggle('active', pulse);
+        bars.querySelectorAll('span').forEach(s => s.style.background = color);
+    }
 }
 
 function updateSpeechRunBtn(running) {
@@ -1472,10 +1488,15 @@ function displayTvmDemoResults(r) {
 }
 
 function setTvmDemoStatus(msg, color, pulse) {
-    const txt = document.getElementById('tvm-demo-status');
-    const dot = document.getElementById('tvm-demo-dot');
+    const txt  = document.getElementById('tvm-demo-status');
+    const dot  = document.getElementById('tvm-demo-dot');
+    const bars = document.getElementById('tvm-demo-bars');
     if (txt) { txt.textContent = msg; txt.style.color = color; }
-    if (dot)  { dot.style.background = color; dot.style.animation = pulse ? 'pulse 2s infinite' : 'none'; }
+    if (dot)  { dot.style.display = pulse ? 'none' : 'inline-block'; dot.style.background = color; }
+    if (bars) {
+        bars.classList.toggle('active', pulse);
+        bars.querySelectorAll('span').forEach(s => s.style.background = color);
+    }
 }
 
 function updateTvmDemoBtn(running) {
