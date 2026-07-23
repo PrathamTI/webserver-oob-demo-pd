@@ -730,7 +730,8 @@ document.querySelectorAll('.dsi').forEach((el, i) => {
         document.getElementById('live-audio-section').style.display  = isAudio  ? 'flex' : 'none';
         document.getElementById('live-tvm-section').style.display    = isTvm    ? 'flex' : 'none';
         document.getElementById('live-speech-section').style.display = isSpeech ? 'flex' : 'none';
-        _setRunBtnState(isTvm);
+        _setRunBtnState(isTvm || isSpeech);
+        _syncTopRunBtn(false);
         if (isAudio)       { loadAudioDevices(); loadAudioOutputDevices(); }
         else if (isSpeech) { loadSpeechOutputDevices(); }
         else if (!isTvm) {
@@ -775,13 +776,23 @@ function toggleSigFlow(hdr) {
 function triggerRun(btn) {
     const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
     if (activeIdx === TVM_DEMO_IDX) { toggleTvmDemo(); return; }
+    if (activeIdx === SPEECH_IDX)   { toggleSpeechEnhancement(); return; }
 }
 
-function _setRunBtnState(isTvm) {
+function _setRunBtnState(enabled) {
     const top = document.getElementById('topRunBtn');
     const mid = document.getElementById('midRunBtn');
-    if (top) top.disabled = !isTvm;
-    if (mid) mid.disabled = !isTvm;
+    if (top) top.disabled = !enabled;
+    if (mid) mid.disabled = !enabled;
+}
+
+function _syncTopRunBtn(running, label) {
+    const btn = document.getElementById('topRunBtn');
+    if (!btn) return;
+    btn.classList.toggle('running', running);
+    const svg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>';
+    const stopSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>';
+    btn.innerHTML = (running ? stopSvg : svg) + ' ' + (label || (running ? 'Stop Demo' : 'Run Demo'));
 }
 
 /* ── AUDIO CLASSIFICATION BACKEND ── */
@@ -1209,18 +1220,24 @@ function setSpeechStatus(msg, color, pulse) {
         bars.classList.toggle('active', pulse);
         bars.querySelectorAll('span').forEach(s => s.style.background = color);
     }
+    if (!pulse && speechRunning) {
+        speechRunning = false;
+        updateSpeechRunBtn(false);
+    }
 }
 
 function updateSpeechRunBtn(running) {
     const btn = document.getElementById('speech-run-btn');
     if (!btn) return;
     if (running) {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Spectrum';
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop';
         btn.style.background = '#dc2626';
     } else {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 5,7 7,15 10,5 12,18 15,9 17,14 20,11 22,12"/></svg> Start Spectrum';
+        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 5,7 7,15 10,5 12,18 15,9 17,14 20,11 22,12"/></svg> Run Edge-AI Speech Enhancement';
         btn.style.background = '';
     }
+    const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
+    if (activeIdx === SPEECH_IDX) _syncTopRunBtn(running);
 }
 
 /* ── SPEECH SPECTROGRAM ─────────────────────────────────────────────────── */
@@ -1603,6 +1620,8 @@ function updateTvmDemoBtn(running) {
         btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Run TVM Inference';
         btn.style.background = '';
     }
+    const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
+    if (activeIdx === TVM_DEMO_IDX) _syncTopRunBtn(running);
 }
 
 /* ── STATUS BAR ── */
@@ -1622,7 +1641,7 @@ function pollCpuStatus() {
 }
 setInterval(pollCpuStatus, 1000);
 pollCpuStatus();
-_setRunBtnState(true); /* TVM is default active demo */
+_setRunBtnState(true); /* Speech Enhancement is default active demo */
 drawSpeechSpecIdle('in');
 drawSpeechSpecIdle('out');
 drawWaveformIdle('in');
@@ -1936,7 +1955,7 @@ function toggleTheme() {
 }
 (function(){ if(document.documentElement.dataset.theme==='light'){ const b=document.getElementById('theme-btn'); if(b) b.innerHTML='&#9790;'; } })();
 
-document.addEventListener('DOMContentLoaded', () => { _checkDspOverlayConflict(); _HC.start(); loadSpeechDevices(); loadSpeechOutputDevices(); loadSpeechFileInfo(); _setRunBtnState(false); });
+document.addEventListener('DOMContentLoaded', () => { _checkDspOverlayConflict(); _HC.start(); loadSpeechDevices(); loadSpeechOutputDevices(); loadSpeechFileInfo(); });
 </script>
 
 <!-- ── DSP audio overlay conflict modal ── -->
