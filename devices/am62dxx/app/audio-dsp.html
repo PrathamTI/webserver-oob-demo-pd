@@ -362,10 +362,6 @@
                         </div>
                     </div>
                     </div>
-                    <button class="btn-run-this" id="midRunBtn" onclick="triggerRun(this)">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                        Run This Demo
-                    </button>
                 </div>
 
                 <!-- Live TVM Inference panel (shown when TVM demo is selected) -->
@@ -404,10 +400,6 @@
                             </div>
                         </div>
                     </div>
-                    <button id="tvm-demo-btn" onclick="toggleTvmDemo()" class="btn-run-this">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-                        Run TVM Inference
-                    </button>
                 </div>
 
                 <!-- Live Audio Classification panel -->
@@ -492,10 +484,6 @@
                     <div id="audio-results" style="overflow-y:auto;background:#05080f;border:1px solid #1e2a3a;border-radius:6px;padding:8px;min-height:80px;max-height:150px;font-size:12px;">
                         <div style="color:#475569;text-align:center;padding:16px 0;" id="audio-results-placeholder">Results will appear here when running</div>
                     </div>
-                    <button id="audio-run-btn" class="btn-run-this" disabled>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-                        Not Supported Yet
-                    </button>
                 </div>
 
                 <!-- Live Speech Enhancement panel -->
@@ -644,10 +632,6 @@
                     <div id="speech-results" style="overflow-y:auto;background:#05080f;border:1px solid #1e2a3a;border-radius:6px;min-height:80px;max-height:160px;font-size:11px;">
                         <div style="color:#475569;text-align:center;padding:16px 0;" id="speech-results-placeholder">RMS values will appear per batch when running</div>
                     </div>
-                    <button id="speech-run-btn" class="btn-run-this" onclick="toggleSpeechEnhancement()">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 5,7 7,15 10,5 12,18 15,9 17,14 20,11 22,12"/></svg>
-                        Run Edge-AI Speech Enhancement
-                    </button>
                 </div>
 
             </div>
@@ -781,9 +765,7 @@ function triggerRun(btn) {
 
 function _setRunBtnState(enabled) {
     const top = document.getElementById('topRunBtn');
-    const mid = document.getElementById('midRunBtn');
     if (top) top.disabled = !enabled;
-    if (mid) mid.disabled = !enabled;
 }
 
 function _syncTopRunBtn(running, label) {
@@ -1227,15 +1209,6 @@ function setSpeechStatus(msg, color, pulse) {
 }
 
 function updateSpeechRunBtn(running) {
-    const btn = document.getElementById('speech-run-btn');
-    if (!btn) return;
-    if (running) {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop';
-        btn.style.background = '#dc2626';
-    } else {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="2,12 5,7 7,15 10,5 12,18 15,9 17,14 20,11 22,12"/></svg> Run Edge-AI Speech Enhancement';
-        btn.style.background = '';
-    }
     const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
     if (activeIdx === SPEECH_IDX) _syncTopRunBtn(running);
 }
@@ -1611,15 +1584,6 @@ function setTvmDemoStatus(msg, color, pulse) {
 }
 
 function updateTvmDemoBtn(running) {
-    const btn = document.getElementById('tvm-demo-btn');
-    if (!btn) return;
-    if (running) {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Stop Inference';
-        btn.style.background = '#dc2626';
-    } else {
-        btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg> Run TVM Inference';
-        btn.style.background = '';
-    }
     const activeIdx = Array.from(document.querySelectorAll('.dsi')).findIndex(d => d.classList.contains('active'));
     if (activeIdx === TVM_DEMO_IDX) _syncTopRunBtn(running);
 }
