@@ -16,7 +16,7 @@
       "tvmDir": "/usr/share/tvm_inference",
       "jsonFile": "json/pipeline_stft_istft.json",
       "artifactsPath": "artifacts",
-      "inputPath": "/usr/share/tvm_inference/input_audio/input_audio.wav",
+      "inputPath": "/usr/share/tvm_inference/input/input_audio.wav",
       "streamSocket": "/tmp/edge-ai-speech.sock",
       "outputName": "processed_output.wav"
     },
