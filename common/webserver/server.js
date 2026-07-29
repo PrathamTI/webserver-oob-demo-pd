@@ -95,6 +95,20 @@ if (fs.existsSync(deviceAppDir)) {
 }
 app.use(express.static(appDir));
 
+/* If the device ships a Vue app, serve it at the root instead of the legacy index.html.
+ * Both dev (DEVICE_CONFIG = devices/<id>/device.json) and production (DEVICE_CONFIG =
+ * ${datadir}/${BPN}/device.json, one level above app/) resolve deviceAppDir to the app/
+ * directory that contains vue-dist.  The appDir fallback handles any other layout where
+ * device.json is placed inside app/ rather than beside it. */
+const vueIndex = [
+    path.join(deviceAppDir, 'vue-dist', 'index.html'),
+    path.join(appDir,       'vue-dist', 'index.html'),
+].find(p => fs.existsSync(p));
+if (vueIndex) {
+    app.get('/', (req, res) => res.sendFile(vueIndex));
+    console.log('[Server] Vue app root: ' + vueIndex);
+}
+
 /* Health check — used by frontend to detect disconnects and post-reboot reconnect */
 app.get('/ping', (req, res) => res.json({ ok: true }));
 
@@ -201,6 +215,16 @@ for (const demoId of device.demos) {
     } catch (err) {
         console.error(`[Server] Failed to load demo plugin ${demoId}:`, err);
     }
+}
+
+/* ------------------------------------------------------------------ */
+/* SPA fallback — serve Vue app for any unmatched GET                  */
+/* ------------------------------------------------------------------ */
+
+/* Must come after all API routes and plugin registrations so API paths
+ * are never caught here. Only fires when vue-dist/index.html exists. */
+if (fs.existsSync(vueIndex)) {
+    app.get('*', (req, res) => res.sendFile(vueIndex));
 }
 
 /* ------------------------------------------------------------------ */
